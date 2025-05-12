@@ -47,9 +47,4 @@ export class CreateDoctorDto {
   @IsOptional()
   @IsString()
   bio?: string;
-
-  @ApiProperty({ example: 'Mon-Fri: 9am-5pm', description: 'Office hours', required: false })
-  @IsOptional()
-  @IsString()
-  officeHours?: string;
 }

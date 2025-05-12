@@ -12,6 +12,7 @@ import { PatientsModule } from './modules/patients/patients.module';
 import { DoctorsModule } from './modules/doctors/doctors.module';
 import { NursesModule } from './modules/nurses/nurses.module';
 import { BarcodeModule } from './modules/barcode/barcode.module';
+import { ScheduleModule } from './modules/schedules/schedule.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { BarcodeModule } from './modules/barcode/barcode.module';
     DiagnosesModule,
     AuditLogsModule,
     BarcodeModule,
+    ScheduleModule,
   ],
 })
 export class AppModule {}

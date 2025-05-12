@@ -3,6 +3,7 @@ import { User } from '../../users/entities/user.entity';
 import { Appointment } from '../../appointments/entities/appointment.entity';
 import { Prescription } from '../../prescriptions/entities/prescription.entity';
 import { Diagnosis } from '../../diagnoses/entities/diagnosis.entity';
+import { DoctorSchedule } from '../../schedules/entities/doctor-schedule.entity';
 
 @Entity('doctors')
 export class Doctor {
@@ -37,9 +38,6 @@ export class Doctor {
   @Column({ nullable: true })
   bio: string;
 
-  @Column({ nullable: true })
-  officeHours: string;
-
   @OneToMany(() => Appointment, appointment => appointment.doctor)
   appointments: Appointment[];
 
@@ -48,6 +46,9 @@ export class Doctor {
 
   @OneToMany(() => Diagnosis, diagnosis => diagnosis.doctor)
   diagnoses: Diagnosis[];
+
+  @OneToMany(() => DoctorSchedule, schedule => schedule.doctor)
+  schedules: DoctorSchedule[];
 
   @CreateDateColumn()
   createdAt: Date;

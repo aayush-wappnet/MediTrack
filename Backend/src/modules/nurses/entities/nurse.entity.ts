@@ -2,6 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn, CreateDat
 import { User } from '../../users/entities/user.entity';
 import { Appointment } from '../../appointments/entities/appointment.entity';
 import { LabReport } from '../../lab-reports/entities/lab-report.entity';
+import { NurseSchedule } from '../../schedules/entities/nurse-schedule.entity';
 
 @Entity('nurses')
 export class Nurse {
@@ -33,14 +34,14 @@ export class Nurse {
   @Column({ nullable: true })
   education: string;
 
-  @Column({ nullable: true })
-  shiftHours: string;
-
   @OneToMany(() => Appointment, appointment => appointment.nurse)
   appointments: Appointment[];
 
   @OneToMany(() => LabReport, labReport => labReport.uploadedBy)
   labReports: LabReport[];
+
+  @OneToMany(() => NurseSchedule, schedule => schedule.nurse)
+  schedules: NurseSchedule[];
 
   @CreateDateColumn()
   createdAt: Date;

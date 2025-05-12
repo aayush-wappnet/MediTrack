@@ -42,9 +42,4 @@ export class CreateNurseDto {
   @IsOptional()
   @IsString()
   education?: string;
-
-  @ApiProperty({ example: 'Mon-Fri: 7am-3pm', description: 'Shift hours', required: false })
-  @IsOptional()
-  @IsString()
-  shiftHours?: string;
 }
