@@ -11,11 +11,11 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async validateUser(username: string, password: string): Promise<any> {
+  async validateUser(email: string, password: string): Promise<any> {
     let user;
     
     try {
-      user = await this.usersService.findByEmail(username); // 'username' here will be the email from LoginDto
+      user = await this.usersService.findByEmail(email); // Use email directly
     } catch (error) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -38,7 +38,6 @@ export class AuthService {
     
     const payload = { 
       sub: user.id,
-      username: user.username,
       email: user.email,
       role: user.role
     };
@@ -54,7 +53,6 @@ export class AuthService {
     return {
       user: {
         id: user.id,
-        username: user.username,
         email: user.email,
         role: user.role,
       },

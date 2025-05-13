@@ -3,11 +3,6 @@ import { IsEmail, IsEnum, IsNotEmpty, IsString, MinLength } from 'class-validato
 import { Role } from '../../../common/enums/role.enum';
 
 export class CreateUserDto {
-  @ApiProperty({ example: 'johndoe', description: 'Unique username' })
-  @IsNotEmpty()
-  @IsString()
-  username: string;
-
   @ApiProperty({ example: 'john.doe@example.com', description: 'Email address' })
   @IsNotEmpty()
   @IsEmail()

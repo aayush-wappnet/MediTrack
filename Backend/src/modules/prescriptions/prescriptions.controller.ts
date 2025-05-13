@@ -163,7 +163,7 @@ export class PrescriptionsController {
   async fulfill(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
     const updateDto: UpdatePrescriptionDto = {
       status: PrescriptionStatus.FULFILLED,
-      fulfilledBy: req.user.username,
+      fulfilledBy: req.user.email,
       fulfilledDate: new Date(),
     };
     
