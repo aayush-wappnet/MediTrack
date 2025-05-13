@@ -46,9 +46,9 @@ function Register() {
 
     try {
       await register({ email, password, role });
-      setShowToast({ message: 'Registration successful! Please login.', type: 'success' });
+      setShowToast({ message: 'Registration successful! Please complete your profile.', type: 'success' });
       setIsNavigating(true);
-      setTimeout(() => navigate('/login'), 1000); // Redirect to login
+      setTimeout(() => navigate('/complete-profile'), 1000); // Redirect to complete profile
     } catch {
       setShowToast({ message: error || 'Registration failed', type: 'error' });
     }

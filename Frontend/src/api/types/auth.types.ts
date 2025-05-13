@@ -20,6 +20,7 @@ export interface LoginDto {
       role: string;
     };
     message: string;
+    accessToken: string;
   }
   
   export interface AuthError {

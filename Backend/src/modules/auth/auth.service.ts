@@ -50,13 +50,20 @@ export class AuthService {
   async register(createUserDto: CreateUserDto) {
     const user = await this.usersService.create(createUserDto);
     
+    const payload = { 
+      sub: user.id,
+      email: user.email,
+      role: user.role
+    };
+    
     return {
+      accessToken: this.jwtService.sign(payload),
       user: {
         id: user.id,
         email: user.email,
         role: user.role,
       },
-      message: 'User registered successfully. You can now log in.',
+      message: 'User registered successfully.',
     };
   }
 }

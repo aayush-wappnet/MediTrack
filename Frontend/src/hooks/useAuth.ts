@@ -14,18 +14,50 @@ interface UserProfile {
   updatedAt: string;
 }
 
+interface ProfileResponse {
+  id: string;
+  firstName?: string;
+}
+
+interface CreateProfileDto {
+  userId: string;
+  firstName?: string;
+  lastName?: string;
+  [key: string]: any;
+}
+
 export const useAuth = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { isAuthenticated, user, token, error } = useSelector(
+  const { isAuthenticated, user, token, profileId, error } = useSelector(
     (state: RootState) => state.auth
   );
 
-  const fetchProfile = async (): Promise<UserProfile> => {
+  const fetchUserProfile = async (): Promise<UserProfile> => {
     try {
       const response = await apiClient.get<UserProfile>('/users/profile');
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch profile');
+      throw new Error(error.response?.data?.message || 'Failed to fetch user profile');
+    }
+  };
+
+  const fetchRoleProfile = async (role: 'doctor' | 'nurse' | 'patient'): Promise<ProfileResponse> => {
+    try {
+      const endpoint = role === 'doctor' ? '/doctors/profile' : role === 'nurse' ? '/nurses/profile' : '/patients/profile';
+      const response = await apiClient.get<ProfileResponse>(endpoint);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || `Failed to fetch ${role} profile`);
+    }
+  };
+
+  const createRoleProfile = async (role: 'doctor' | 'nurse' | 'patient', data: CreateProfileDto) => {
+    try {
+      const endpoint = role === 'doctor' ? '/doctors' : role === 'nurse' ? '/nurses' : '/patients';
+      const response = await apiClient.post<{ id: string }>(endpoint, data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || `Failed to create ${role} profile`);
     }
   };
 
@@ -33,14 +65,20 @@ export const useAuth = () => {
     try {
       const response = await login(data);
       localStorage.setItem('accessToken', response.accessToken);
-      const profile = await fetchProfile();
+      const userProfile = await fetchUserProfile();
+      let profileData: ProfileResponse | null = null;
+      if (userProfile.role !== 'admin') {
+        profileData = await fetchRoleProfile(userProfile.role);
+      }
       dispatch(loginSuccess({
         user: {
-          id: profile.id,
-          email: profile.email,
-          role: profile.role,
+          id: userProfile.id,
+          email: userProfile.email,
+          role: userProfile.role,
         },
         token: response.accessToken,
+        profileId: profileData?.id,
+        firstName: profileData?.firstName,
       }));
       return true;
     } catch (error: any) {
@@ -54,6 +92,7 @@ export const useAuth = () => {
   const handleRegister = async (data: CreateUserDto) => {
     try {
       const response = await register(data);
+      localStorage.setItem('accessToken', response.accessToken);
       dispatch(
         loginSuccess({
           user: {
@@ -61,7 +100,7 @@ export const useAuth = () => {
             email: response.user.email,
             role: response.user.role as 'doctor' | 'nurse' | 'patient',
           },
-          token: '', // No token on register; user must login
+          token: response.accessToken,
         })
       );
       return response;
@@ -70,6 +109,28 @@ export const useAuth = () => {
         loginFailure(error.response?.data?.message || 'Registration failed')
       );
       throw error;
+    }
+  };
+
+  const handleCompleteProfile = async (role: 'doctor' | 'nurse' | 'patient', data: CreateProfileDto) => {
+    try {
+      const profileResponse = await createRoleProfile(role, data);
+      const profileData = await fetchRoleProfile(role);
+      dispatch(
+        loginSuccess({
+          user: {
+            id: data.userId,
+            email: user?.email || '',
+            role,
+          },
+          token: token || '',
+          profileId: profileResponse.id,
+          firstName: profileData.firstName,
+        })
+      );
+      return profileResponse;
+    } catch (error: any) {
+      throw new Error(error.message || `Failed to complete ${role} profile`);
     }
   };
 
@@ -82,9 +143,11 @@ export const useAuth = () => {
     isAuthenticated,
     user,
     token,
+    profileId,
     error,
     login: handleLogin,
     register: handleRegister,
+    completeProfile: handleCompleteProfile,
     logout: handleLogout,
   };
 };

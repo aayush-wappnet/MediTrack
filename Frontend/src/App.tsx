@@ -4,6 +4,7 @@ import type { JSX } from 'react';
 import { store } from './store';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
+import CompleteProfile from './pages/auth/CompleteProfile';
 import NotFound from './pages/NotFound';
 import MainLayout from './layouts/MainLayout';
 import { useAuth } from './hooks/useAuth';
@@ -20,6 +21,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/complete-profile" element={<CompleteProfile />} />
           <Route
             path="/"
             element={
