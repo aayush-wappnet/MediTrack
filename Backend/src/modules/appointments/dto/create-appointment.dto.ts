@@ -35,10 +35,10 @@ export class CreateAppointmentDto {
   @IsString()
   endTime: string;
 
-  @ApiProperty({ enum: AppointmentStatus, default: AppointmentStatus.SCHEDULED, description: 'Appointment status' })
+  @ApiProperty({ enum: AppointmentStatus, default: AppointmentStatus.PENDING_APPROVAL, description: 'Appointment status' })
   @IsOptional()
   @IsEnum(AppointmentStatus)
-  status?: AppointmentStatus = AppointmentStatus.SCHEDULED;
+  status?: AppointmentStatus = AppointmentStatus.PENDING_APPROVAL;
 
   @ApiProperty({ example: 'Annual checkup', description: 'Reason for visit', required: false })
   @IsOptional()

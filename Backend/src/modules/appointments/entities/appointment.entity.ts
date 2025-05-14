@@ -6,10 +6,11 @@ import { Diagnosis } from '../../diagnoses/entities/diagnosis.entity'; // Added 
 import { LabReport } from '../../lab-reports/entities/lab-report.entity'; // Added import
 
 export enum AppointmentStatus {
-  SCHEDULED = 'scheduled',
-  CONFIRMED = 'confirmed',
-  CANCELLED = 'cancelled',
+  PENDING_APPROVAL = 'pending_approval',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
   COMPLETED = 'completed',
+  CANCELLED = 'cancelled',
   NO_SHOW = 'no_show',
 }
 
@@ -42,7 +43,7 @@ export class Appointment {
   @Column({
     type: 'enum',
     enum: AppointmentStatus,
-    default: AppointmentStatus.SCHEDULED
+    default: AppointmentStatus.PENDING_APPROVAL
   })
   status: AppointmentStatus;
 

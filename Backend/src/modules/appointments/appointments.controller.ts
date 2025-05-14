@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request, ParseUUIDPipe, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request, ParseUUIDPipe, Query, ForbiddenException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AppointmentsService } from './appointments.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
@@ -23,15 +23,15 @@ export class AppointmentsController {
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.DOCTOR, Role.NURSE)
+  @Roles(Role.PATIENT)
   @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Create a new appointment' })
   @ApiResponse({ status: 201, description: 'Appointment created successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  create(@Body() createAppointmentDto: CreateAppointmentDto) {
-    return this.appointmentsService.create(createAppointmentDto);
+  async create(@Body() createAppointmentDto: CreateAppointmentDto, @Request() req) {
+    return this.appointmentsService.createAppointmentForPatient(createAppointmentDto, req.user.id);
   }
 
   @Get()
@@ -118,17 +118,68 @@ export class AppointmentsController {
     return appointment;
   }
 
+  @Patch(':id/approve')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.DOCTOR)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Approve an appointment (Doctor only)' })
+  @ApiResponse({ status: 200, description: 'Appointment approved successfully' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Not authorized' })
+  @ApiResponse({ status: 404, description: 'Appointment not found' })
+  async approveAppointment(
+    @Param('id') id: string,
+    @Request() req,
+  ) {
+    const doctor = await this.doctorsService.findByUserId(req.user.id);
+    return this.appointmentsService.approveAppointment(id, doctor.id);
+  }
+
+  @Patch(':id/reject')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.DOCTOR)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Reject an appointment (Doctor only)' })
+  @ApiResponse({ status: 200, description: 'Appointment rejected successfully' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Not authorized' })
+  @ApiResponse({ status: 404, description: 'Appointment not found' })
+  async rejectAppointment(
+    @Param('id') id: string,
+    @Body('rejectionReason') rejectionReason: string,
+    @Request() req,
+  ) {
+    const doctor = await this.doctorsService.findByUserId(req.user.id);
+    return this.appointmentsService.rejectAppointment(id, doctor.id, rejectionReason);
+  }
+
+  @Patch(':id/cancel')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.PATIENT)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Cancel appointment (Patient only)' })
+  @ApiResponse({ status: 200, description: 'Appointment cancelled successfully' })
+  @ApiResponse({ status: 400, description: 'Bad request - Cannot cancel within 24 hours' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Not your appointment' })
+  @ApiResponse({ status: 404, description: 'Appointment not found' })
+  async cancelAppointment(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body('cancelReason') cancelReason: string,
+    @Request() req,
+  ) {
+    return this.appointmentsService.cancelAppointment(id, req.user.id, cancelReason);
+  }
+
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.DOCTOR, Role.NURSE)
+  @Roles(Role.ADMIN)
   @ApiBearerAuth('JWT')
-  @ApiOperation({ summary: 'Update appointment by id' })
+  @ApiOperation({ summary: 'Update appointment by id (Admin only)' })
   @ApiResponse({ status: 200, description: 'Appointment updated successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Appointment not found' })
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() updateAppointmentDto: UpdateAppointmentDto) {
+  async update(@Param('id', ParseUUIDPipe) id: string, @Body() updateAppointmentDto: UpdateAppointmentDto) {
     return this.appointmentsService.update(id, updateAppointmentDto);
   }
 

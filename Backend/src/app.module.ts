@@ -30,7 +30,7 @@ import { ScheduleModule } from './modules/schedules/schedule.module';
         password: configService.get('DATABASE_PASSWORD'),
         database: configService.get('DATABASE_NAME'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: configService.get('NODE_ENV') !== 'production',
+        synchronize: true,
         logging: configService.get('NODE_ENV') === 'development',
       }),
     }),

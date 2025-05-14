@@ -18,12 +18,20 @@ export class AppointmentsService {
     private nursesService: NursesService,
   ) {}
 
-  async create(createAppointmentDto: CreateAppointmentDto): Promise<Appointment> {
-    const { patientId, doctorId, nurseId, ...appointmentData } = createAppointmentDto;
+  async createAppointmentForPatient(createAppointmentDto: CreateAppointmentDto, patientUserId: string): Promise<Appointment> {
+    const { doctorId, nurseId, ...appointmentData } = createAppointmentDto;
     
-    // Get patient and doctor
-    const patient = await this.patientsService.findOne(patientId);
+    // Get patient by user ID
+    const patient = await this.patientsService.findByUserId(patientUserId);
+    if (!patient) {
+      throw new BadRequestException('Patient not found');
+    }
+
+    // Get doctor
     const doctor = await this.doctorsService.findOne(doctorId);
+    if (!doctor) {
+      throw new BadRequestException('Doctor not found');
+    }
     
     // Check for time conflict for doctor
     const doctorConflict = await this.checkTimeConflict(
@@ -42,11 +50,15 @@ export class AppointmentsService {
       ...appointmentData,
       patient,
       doctor,
+      status: AppointmentStatus.PENDING_APPROVAL // Ensure status is set to pending
     });
     
     // Add nurse if provided
     if (nurseId) {
       const nurse = await this.nursesService.findOne(nurseId);
+      if (!nurse) {
+        throw new BadRequestException('Nurse not found');
+      }
       
       // Check for time conflict for nurse
       const nurseConflict = await this.checkTimeConflict(
@@ -61,6 +73,64 @@ export class AppointmentsService {
         throw new BadRequestException('Nurse already has an appointment at this time');
       }
       
+      appointment.nurse = nurse;
+    }
+    
+    return this.appointmentsRepository.save(appointment);
+  }
+
+  // Public create method for use by other services
+  async create(createAppointmentDto: CreateAppointmentDto): Promise<Appointment> {
+    const { patientId, doctorId, nurseId, ...appointmentData } = createAppointmentDto;
+    
+    const patient = await this.patientsService.findOne(patientId);
+    if (!patient) {
+      throw new BadRequestException('Patient not found');
+    }
+
+    const doctor = await this.doctorsService.findOne(doctorId);
+    if (!doctor) {
+      throw new BadRequestException('Doctor not found');
+    }
+    
+    // Check for time conflicts
+    const doctorConflict = await this.checkTimeConflict(
+      doctorId,
+      appointmentData.date,
+      appointmentData.startTime,
+      appointmentData.endTime
+    );
+    
+    if (doctorConflict) {
+      throw new BadRequestException('Doctor already has an appointment at this time');
+    }
+
+    const appointment = this.appointmentsRepository.create({
+      ...appointmentData,
+      patient,
+      doctor,
+      status: AppointmentStatus.PENDING_APPROVAL
+    });
+    
+    if (nurseId) {
+      const nurse = await this.nursesService.findOne(nurseId);
+      if (!nurse) {
+        throw new BadRequestException('Nurse not found');
+      }
+
+      // Check for nurse time conflicts
+      const nurseConflict = await this.checkTimeConflict(
+        nurseId,
+        appointmentData.date,
+        appointmentData.startTime,
+        appointmentData.endTime,
+        'nurse'
+      );
+      
+      if (nurseConflict) {
+        throw new BadRequestException('Nurse already has an appointment at this time');
+      }
+
       appointment.nurse = nurse;
     }
     
@@ -97,6 +167,78 @@ export class AppointmentsService {
     return this.appointmentsRepository.find({
       where: { doctor: { id: doctorId } },
       relations: ['patient', 'doctor', 'nurse', 'patient.user', 'doctor.user', 'nurse.user'],
+    });
+  }
+
+  async approveAppointment(id: string, doctorId: string): Promise<Appointment> {
+    const appointment = await this.findOne(id);
+    
+    if (appointment.status !== AppointmentStatus.PENDING_APPROVAL) {
+      throw new BadRequestException('Only pending appointments can be approved');
+    }
+
+    if (appointment.doctor.id !== doctorId) {
+      throw new BadRequestException('You can only approve appointments assigned to you');
+    }
+
+    return this.appointmentsRepository.save({
+      ...appointment,
+      status: AppointmentStatus.APPROVED,
+    });
+  }
+
+  async rejectAppointment(id: string, doctorId: string, rejectionReason: string): Promise<Appointment> {
+    const appointment = await this.findOne(id);
+    
+    if (appointment.status !== AppointmentStatus.PENDING_APPROVAL) {
+      throw new BadRequestException('Only pending appointments can be rejected');
+    }
+
+    if (appointment.doctor.id !== doctorId) {
+      throw new BadRequestException('You can only reject appointments assigned to you');
+    }
+
+    if (!rejectionReason) {
+      throw new BadRequestException('Rejection reason is required');
+    }
+
+    return this.appointmentsRepository.save({
+      ...appointment,
+      status: AppointmentStatus.REJECTED,
+      notes: `Rejected: ${rejectionReason}` // Prefix the rejection reason
+    });
+  }
+
+  async cancelAppointment(id: string, patientUserId: string, cancelReason?: string): Promise<Appointment> {
+    const appointment = await this.findOne(id);
+    const patient = await this.patientsService.findByUserId(patientUserId);
+
+    if (!patient) {
+      throw new BadRequestException('Patient not found');
+    }
+
+    if (appointment.patient.id !== patient.id) {
+      throw new BadRequestException('You can only cancel your own appointments');
+    }
+
+    // Check if appointment can be cancelled
+    if (![AppointmentStatus.PENDING_APPROVAL, AppointmentStatus.APPROVED].includes(appointment.status)) {
+      throw new BadRequestException('Only pending or approved appointments can be cancelled');
+    }
+
+    // If appointment is within 24 hours, don't allow cancellation
+    const appointmentDateTime = new Date(`${appointment.date}T${appointment.startTime}`);
+    const now = new Date();
+    const hoursDifference = (appointmentDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+    if (hoursDifference < 24) {
+      throw new BadRequestException('Appointments cannot be cancelled within 24 hours of the scheduled time');
+    }
+
+    return this.appointmentsRepository.save({
+      ...appointment,
+      status: AppointmentStatus.CANCELLED,
+      notes: cancelReason ? `Cancelled by patient: ${cancelReason}` : 'Cancelled by patient'
     });
   }
 
