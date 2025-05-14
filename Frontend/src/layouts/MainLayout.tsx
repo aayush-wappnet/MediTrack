@@ -104,7 +104,7 @@ function MainLayout({ children }: MainLayoutProps) {
             >
               <FaBars className="h-6 w-6" />
             </button>
-            <h2 className="text-xl font-semibold ml-4">Welcome, {user.firstName || user.email || 'User'}</h2>
+            <h2 className="text-xl font-semibold ml-4">Welcome, {user.firstName || user.role || 'User' }</h2>
           </div>
           <button
             onClick={handleLogout}

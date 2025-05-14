@@ -1,13 +1,16 @@
 import { Provider } from 'react-redux';
+import { PersistGate } from 'redux-persist/integration/react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import type { JSX } from 'react';
-import { store } from './store';
+import { store, persistor } from './store';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import CompleteProfile from './pages/auth/CompleteProfile';
+import Users from './pages/admin/Users';
 import NotFound from './pages/NotFound';
 import MainLayout from './layouts/MainLayout';
 import { useAuth } from './hooks/useAuth';
+import Appointments from './pages/doctor/Appointments';
 
 function ProtectedRoute({ children }: { children: JSX.Element }) {
   const { isAuthenticated } = useAuth();
@@ -17,7 +20,8 @@ function ProtectedRoute({ children }: { children: JSX.Element }) {
 function App() {
   return (
     <Provider store={store}>
-      <BrowserRouter>
+      <PersistGate loading={null} persistor={persistor}>
+        <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -38,7 +42,7 @@ function App() {
             element={
               <ProtectedRoute>
                 <MainLayout>
-                  <div className="p-4">Users (Placeholder)</div>
+                  <Users />
                 </MainLayout>
               </ProtectedRoute>
             }
@@ -69,7 +73,7 @@ function App() {
             element={
               <ProtectedRoute>
                 <MainLayout>
-                  <div className="p-4">Appointments (Placeholder)</div>
+                  <Appointments />
                 </MainLayout>
               </ProtectedRoute>
             }
@@ -148,7 +152,8 @@ function App() {
           />
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </BrowserRouter>
+        </BrowserRouter>
+      </PersistGate>
     </Provider>
   );
 }

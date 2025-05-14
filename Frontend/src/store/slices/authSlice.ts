@@ -16,9 +16,9 @@ interface AuthState {
 }
 
 const initialState: AuthState = {
-  isAuthenticated: !!localStorage.getItem('accessToken'),
+  isAuthenticated: false,
   user: null,
-  token: localStorage.getItem('accessToken'),
+  token: null,
   profileId: null,
   error: null,
 };
