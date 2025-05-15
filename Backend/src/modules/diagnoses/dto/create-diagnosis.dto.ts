@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsUUID, IsBoolean, IsOptional, IsDate } from 'class-validator';
+import { IsNotEmpty, IsString, IsUUID, IsBoolean, IsOptional, IsDate, IsArray } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateDiagnosisDto {
@@ -33,10 +33,11 @@ export class CreateDiagnosisDto {
   @IsString()
   diagnosisType?: string;
 
-  @ApiProperty({ example: 'Headache, dizziness, high blood pressure', description: 'Symptoms associated with diagnosis', required: false })
+  @ApiProperty({ example: ['Headache', 'Dizziness', 'High blood pressure'], description: 'Symptoms associated with diagnosis', required: false, type: [String] })
   @IsOptional()
-  @IsString()
-  symptoms?: string;
+  @IsArray()
+  @IsString({ each: true })
+  symptoms?: string[];
 
   @ApiProperty({ example: 'Patient has family history of hypertension', description: 'Additional notes', required: false })
   @IsOptional()

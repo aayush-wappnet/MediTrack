@@ -28,7 +28,7 @@ export class NursesController {
 
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.DOCTOR)
+  // @Roles(Role.ADMIN, Role.DOCTOR)
   @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Get all nurses' })
   @ApiResponse({ status: 200, description: 'Return all nurses' })

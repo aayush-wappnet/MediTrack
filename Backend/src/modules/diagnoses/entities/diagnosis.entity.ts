@@ -29,8 +29,8 @@ export class Diagnosis {
   @Column({ nullable: true })
   diagnosisType: string;
 
-  @Column({ nullable: true })
-  symptoms: string;
+  @Column({ nullable: true, type: 'simple-array' })
+  symptoms: string[];
 
   @Column({ nullable: true })
   notes: string;
