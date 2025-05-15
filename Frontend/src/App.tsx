@@ -10,8 +10,10 @@ import Users from './pages/admin/Users';
 import NotFound from './pages/NotFound';
 import MainLayout from './layouts/MainLayout';
 import { useAuth } from './hooks/useAuth';
-import Appointments from './pages/doctor/Appointments';
+import Home from './pages/Home';
+import DoctorAppointments from './pages/doctor/Appointments';
 import PatientAppointments from './pages/patient/PatientAppointments';
+import NurseAppointments from './pages/nurse/NurseAppointments';
 
 function ProtectedRoute({ children }: { children: JSX.Element }) {
   const { isAuthenticated } = useAuth();
@@ -32,7 +34,7 @@ function App() {
             element={
               <ProtectedRoute>
                 <MainLayout>
-                  <div className="p-4">Dashboard (Placeholder)</div>
+                  <Home />
                 </MainLayout>
               </ProtectedRoute>
             }
@@ -70,11 +72,11 @@ function App() {
           />
           {/* Doctor Routes */}
           <Route
-            path="/appointments"
+            path="/doctor-appointments"
             element={
               <ProtectedRoute>
                 <MainLayout>
-                  <Appointments />
+                  <DoctorAppointments />
                 </MainLayout>
               </ProtectedRoute>
             }
@@ -136,6 +138,16 @@ function App() {
               <ProtectedRoute>
                 <MainLayout>
                   <div className="p-4">Vitals (Placeholder)</div>
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/nurse-appointments"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <NurseAppointments />
                 </MainLayout>
               </ProtectedRoute>
             }
