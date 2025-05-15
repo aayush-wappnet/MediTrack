@@ -24,9 +24,9 @@ function MainLayout({ children }: MainLayoutProps) {
     doctor: [
       { path: '/', label: 'Dashboard', icon: <FaTachometerAlt /> },
       { path: '/doctor-appointments', label: 'Appointments', icon: <FaCalendarAlt /> },
+      { path: '/diagnoses', label: 'Diagnoses', icon: <FaDiagnoses /> },
       { path: '/patients', label: 'Patients', icon: <FaUserMd /> },
       { path: '/prescriptions', label: 'Prescriptions', icon: <FaPrescription /> },
-      { path: '/diagnoses', label: 'Diagnoses', icon: <FaDiagnoses /> },
       { path: '/lab-requests', label: 'Lab Requests', icon: <FaFlask /> },
     ],
     nurse: [
@@ -39,6 +39,7 @@ function MainLayout({ children }: MainLayoutProps) {
     patient: [
       { path: '/', label: 'Dashboard', icon: <FaTachometerAlt /> },
       { path: '/patient-appointments', label: 'Appointments', icon: <FaCalendarAlt /> },
+      { path: '/patient-diagnoses', label: 'Diagnoses', icon: <FaDiagnoses /> },
       { path: '/prescriptions', label: 'Prescriptions', icon: <FaPrescription /> },
       { path: '/lab-reports', label: 'Lab Reports', icon: <FaFlask /> },
       { path: '/profile', label: 'Profile', icon: <FaUser /> },
