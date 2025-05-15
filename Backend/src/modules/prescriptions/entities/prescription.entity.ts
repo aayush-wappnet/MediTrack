@@ -1,6 +1,9 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { Patient } from '../../patients/entities/patient.entity';
 import { Doctor } from '../../doctors/entities/doctor.entity';
+import { Nurse } from '../../nurses/entities/nurse.entity';
+import { Appointment } from '../../appointments/entities/appointment.entity';
+import { Medication } from './medication.entity';
 
 export enum PrescriptionStatus {
   ISSUED = 'issued',
@@ -21,18 +24,17 @@ export class Prescription {
   @ManyToOne(() => Doctor, doctor => doctor.prescriptions)
   @JoinColumn()
   doctor: Doctor;
-
-  @Column()
-  medicationName: string;
-
-  @Column()
-  dosage: string;
-
-  @Column()
-  frequency: string;
-
-  @Column()
-  duration: string;
+  
+  @ManyToOne(() => Nurse, nurse => nurse.prescriptions, { nullable: true })
+  @JoinColumn()
+  nurse: Nurse;
+  
+  @ManyToOne(() => Appointment, { nullable: true })
+  @JoinColumn()
+  appointment: Appointment;
+  
+  @OneToMany(() => Medication, medication => medication.prescription, { cascade: true, eager: true })
+  medications: Medication[];
 
   @Column({ nullable: true })
   instructions: string;
@@ -46,9 +48,6 @@ export class Prescription {
 
   @Column({ nullable: true })
   fulfilledDate: Date;
-
-  @Column({ nullable: true })
-  fulfilledBy: string;
 
   @Column({ nullable: true })
   notes: string;

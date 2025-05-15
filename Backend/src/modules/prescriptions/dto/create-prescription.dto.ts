@@ -1,6 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsUUID, IsBoolean, IsOptional, IsInt, Min, Max, IsEnum } from 'class-validator';
+import { IsNotEmpty, IsString, IsUUID, IsBoolean, IsOptional, IsInt, Min, Max, IsEnum, IsArray, ValidateNested, ArrayMinSize } from 'class-validator';
+import { Type } from 'class-transformer';
 import { PrescriptionStatus } from '../entities/prescription.entity';
+import { MedicationDto } from './medication.dto';
 
 export class CreatePrescriptionDto {
   @ApiProperty({ description: 'Patient ID' })
@@ -12,26 +14,23 @@ export class CreatePrescriptionDto {
   @IsNotEmpty()
   @IsUUID()
   doctorId: string;
-
-  @ApiProperty({ example: 'Amoxicillin', description: 'Medication name' })
-  @IsNotEmpty()
-  @IsString()
-  medicationName: string;
-
-  @ApiProperty({ example: '500mg', description: 'Dosage' })
-  @IsNotEmpty()
-  @IsString()
-  dosage: string;
-
-  @ApiProperty({ example: 'Twice daily', description: 'Frequency' })
-  @IsNotEmpty()
-  @IsString()
-  frequency: string;
-
-  @ApiProperty({ example: '7 days', description: 'Duration' })
-  @IsNotEmpty()
-  @IsString()
-  duration: string;
+  
+  @ApiProperty({ description: 'Nurse ID', required: false })
+  @IsOptional()
+  @IsUUID()
+  nurseId?: string;
+  
+  @ApiProperty({ description: 'Appointment ID', required: false })
+  @IsOptional()
+  @IsUUID()
+  appointmentId?: string;
+  
+  @ApiProperty({ type: [MedicationDto], description: 'List of medications' })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => MedicationDto)
+  medications: MedicationDto[];
 
   @ApiProperty({ example: 'Take with food', description: 'Instructions for taking medication', required: false })
   @IsOptional()

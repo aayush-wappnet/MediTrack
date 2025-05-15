@@ -4,6 +4,7 @@ import { Doctor } from '../../doctors/entities/doctor.entity';
 import { Nurse } from '../../nurses/entities/nurse.entity';
 import { Diagnosis } from '../../diagnoses/entities/diagnosis.entity'; // Added import
 import { LabReport } from '../../lab-reports/entities/lab-report.entity'; // Added import
+import { Prescription } from '../../prescriptions/entities/prescription.entity'; // Added import
 
 export enum AppointmentStatus {
   PENDING_APPROVAL = 'pending_approval',
@@ -79,4 +80,7 @@ export class Appointment {
 
   @OneToMany(() => LabReport, labReport => labReport.appointment) // Added relation
   labReports: LabReport[]; // Added relation
+
+  @OneToMany(() => Prescription, prescription => prescription.appointment) // Added relation
+  prescriptions: Prescription[]; // Added relation
 }

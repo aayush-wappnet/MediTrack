@@ -3,6 +3,7 @@ import { User } from '../../users/entities/user.entity';
 import { Appointment } from '../../appointments/entities/appointment.entity';
 import { LabReport } from '../../lab-reports/entities/lab-report.entity';
 import { NurseSchedule } from '../../schedules/entities/nurse-schedule.entity';
+import { Prescription } from '../../prescriptions/entities/prescription.entity';
 
 @Entity('nurses')
 export class Nurse {
@@ -42,6 +43,9 @@ export class Nurse {
 
   @OneToMany(() => NurseSchedule, schedule => schedule.nurse)
   schedules: NurseSchedule[];
+
+  @OneToMany(() => Prescription, prescription => prescription.nurse)
+  prescriptions: Prescription[];
 
   @CreateDateColumn()
   createdAt: Date;

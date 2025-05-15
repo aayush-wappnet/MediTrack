@@ -5,10 +5,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
 export class UpdatePrescriptionDto extends PartialType(CreatePrescriptionDto) {
-  @ApiProperty({ description: 'Who fulfilled the prescription', required: false })
-  @IsOptional()
-  fulfilledBy?: string;
-
   @ApiProperty({ description: 'When the prescription was fulfilled', required: false })
   @IsOptional()
   @Type(() => Date)

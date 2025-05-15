@@ -9,6 +9,8 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { PatientsService } from '../patients/patients.service';
 import { DoctorsService } from '../doctors/doctors.service';
+import { NursesService } from '../nurses/nurses.service';
+import { AppointmentsService } from '../appointments/appointments.service';
 import { PrescriptionStatus } from './entities/prescription.entity';
 
 @ApiTags('prescriptions')
@@ -18,6 +20,8 @@ export class PrescriptionsController {
     private readonly prescriptionsService: PrescriptionsService,
     private readonly patientsService: PatientsService,
     private readonly doctorsService: DoctorsService,
+    private readonly nursesService: NursesService,
+    private readonly appointmentsService: AppointmentsService,
   ) {}
 
   @Post()
@@ -34,6 +38,21 @@ export class PrescriptionsController {
     if (!createPrescriptionDto.doctorId) {
       const doctor = await this.doctorsService.findByUserId(req.user.id);
       createPrescriptionDto.doctorId = doctor.id;
+    }
+    
+    // Validate appointment belongs to the patient and doctor if provided
+    if (createPrescriptionDto.appointmentId) {
+      const appointment = await this.appointmentsService.findOne(createPrescriptionDto.appointmentId);
+      
+      // Ensure the appointment belongs to the specified patient
+      if (appointment.patient.id !== createPrescriptionDto.patientId) {
+        return { message: 'The appointment does not belong to the specified patient' };
+      }
+      
+      // Ensure the appointment belongs to the specified doctor
+      if (appointment.doctor.id !== createPrescriptionDto.doctorId) {
+        return { message: 'The appointment does not belong to the specified doctor' };
+      }
     }
     
     return this.prescriptionsService.create(createPrescriptionDto);
@@ -60,6 +79,9 @@ export class PrescriptionsController {
       } else if (user.role === Role.DOCTOR) {
         const doctor = await this.doctorsService.findByUserId(user.id);
         prescriptions = await this.prescriptionsService.findByDoctor(doctor.id);
+      } else if (user.role === Role.NURSE) {
+        const nurse = await this.nursesService.findByUserId(user.id);
+        prescriptions = await this.prescriptionsService.findByNurse(nurse.id);
       } else if (user.role === Role.PATIENT) {
         const patient = await this.patientsService.findByUserId(user.id);
         prescriptions = await this.prescriptionsService.findByPatient(patient.id);
@@ -120,6 +142,19 @@ export class PrescriptionsController {
   findByDoctor(@Param('id', ParseUUIDPipe) id: string) {
     return this.prescriptionsService.findByDoctor(id);
   }
+  
+  @Get('nurse/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.DOCTOR, Role.NURSE)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Get prescriptions by nurse id' })
+  @ApiResponse({ status: 200, description: 'Return prescriptions' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Nurse not found' })
+  findByNurse(@Param('id', ParseUUIDPipe) id: string) {
+    return this.prescriptionsService.findByNurse(id);
+  }
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
@@ -161,10 +196,13 @@ export class PrescriptionsController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Prescription not found' })
   async fulfill(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
+    // Get the nurse information
+    const nurse = await this.nursesService.findByUserId(req.user.id);
+    
     const updateDto: UpdatePrescriptionDto = {
       status: PrescriptionStatus.FULFILLED,
-      fulfilledBy: req.user.email,
       fulfilledDate: new Date(),
+      nurseId: nurse.id, // Set the nurse who fulfilled the prescription
     };
     
     return this.prescriptionsService.update(id, updateDto);
@@ -199,6 +237,23 @@ export class PrescriptionsController {
       // Doctors cannot update prescriptions that are already fulfilled
       if (prescription.status === PrescriptionStatus.FULFILLED) {
         return { message: 'Cannot update a prescription that has already been fulfilled' };
+      }
+    }
+    
+    // Validate appointment belongs to the patient and doctor if provided
+    if (updatePrescriptionDto.appointmentId) {
+      const appointment = await this.appointmentsService.findOne(updatePrescriptionDto.appointmentId);
+      
+      // Ensure the appointment belongs to the specified patient
+      const patientId = updatePrescriptionDto.patientId || prescription.patient.id;
+      if (appointment.patient.id !== patientId) {
+        return { message: 'The appointment does not belong to the specified patient' };
+      }
+      
+      // Ensure the appointment belongs to the specified doctor
+      const doctorId = updatePrescriptionDto.doctorId || prescription.doctor.id;
+      if (appointment.doctor.id !== doctorId) {
+        return { message: 'The appointment does not belong to the specified doctor' };
       }
     }
     
