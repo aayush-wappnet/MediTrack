@@ -1,5 +1,5 @@
 import apiClient from '../apiClient';
-import type { Appointment, CreateAppointmentDto, UpdateAppointmentDto } from '../types/appointments.types';
+import type { Appointment, CreateAppointmentDto, UpdateAppointmentDto, CancelAppointmentDto, RejectAppointmentDto } from '../types/appointments.types';
 
 export const getAppointments = async (): Promise<Appointment[]> => {
   const response = await apiClient.get<Appointment[]>('/appointments');
@@ -18,6 +18,21 @@ export const createAppointment = async (data: CreateAppointmentDto): Promise<App
 
 export const updateAppointment = async (id: string, data: UpdateAppointmentDto): Promise<Appointment> => {
   const response = await apiClient.patch<Appointment>(`/appointments/${id}`, data);
+  return response.data;
+};
+
+export const approveAppointment = async (id: string): Promise<Appointment> => {
+  const response = await apiClient.patch<Appointment>(`/appointments/${id}/approve`, {});
+  return response.data;
+};
+
+export const rejectAppointment = async (id: string, data: RejectAppointmentDto): Promise<Appointment> => {
+  const response = await apiClient.patch<Appointment>(`/appointments/${id}/reject`, data);
+  return response.data;
+};
+
+export const cancelAppointment = async (id: string, data: CancelAppointmentDto): Promise<Appointment> => {
+  const response = await apiClient.patch<Appointment>(`/appointments/${id}/cancel`, data);
   return response.data;
 };
 

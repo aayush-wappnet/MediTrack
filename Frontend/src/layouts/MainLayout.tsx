@@ -37,7 +37,7 @@ function MainLayout({ children }: MainLayoutProps) {
     ],
     patient: [
       { path: '/', label: 'Dashboard', icon: <FaTachometerAlt /> },
-      { path: '/appointments', label: 'Appointments', icon: <FaCalendarAlt /> },
+      { path: '/patient-appointments', label: 'Appointments', icon: <FaCalendarAlt /> },
       { path: '/prescriptions', label: 'Prescriptions', icon: <FaPrescription /> },
       { path: '/lab-reports', label: 'Lab Reports', icon: <FaFlask /> },
       { path: '/profile', label: 'Profile', icon: <FaUser /> },

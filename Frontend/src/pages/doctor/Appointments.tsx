@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaCheck, FaTimes, FaEye } from 'react-icons/fa';
 import Table from '../../components/common/Table';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
@@ -10,13 +10,14 @@ import Modal from '../../components/common/Modal';
 import ConfirmBox from '../../components/common/ConfirmBox';
 import { useRoleGuard } from '../../hooks/useRoleGuard';
 import { useAuth } from '../../hooks/useAuth';
-import { getAppointments, createAppointment, updateAppointment, deleteAppointment, getAppointmentById } from '../../api/endpoints/appointments';
+import { getAppointments, updateAppointment, deleteAppointment, approveAppointment, rejectAppointment, getAppointmentById } from '../../api/endpoints/appointments';
 import { getPatients } from '../../api/endpoints/patients';
 import { getNurses } from '../../api/endpoints/nurses';
-import { AppointmentStatus } from '../../api/types/appointments.types';
-import type { Appointment, CreateAppointmentDto, UpdateAppointmentDto } from '../../api/types/appointments.types';
-import type { Patient } from '../../api/types/patients.types';
-import type { Nurse } from '../../api/types/nurses.types';
+import { getDoctors } from '../../api/endpoints/doctors';
+import { type Appointment, AppointmentStatus, type UpdateAppointmentDto, type RejectAppointmentDto } from '../../api/types/appointments.types';
+import { type Patient } from '../../api/types/patients.types';
+import { type Nurse } from '../../api/types/nurses.types';
+import { type Doctor } from '../../api/types/doctors.types';
 
 function Appointments() {
   const { isAllowed } = useRoleGuard(['admin', 'doctor', 'nurse']);
@@ -25,10 +26,14 @@ function Appointments() {
   const [filteredAppointments, setFilteredAppointments] = useState<Appointment[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [nurses, setNurses] = useState<Nurse[]>([]);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
+  const [viewingAppointment, setViewingAppointment] = useState<Appointment | null>(null);
   const [deletingAppointmentId, setDeletingAppointmentId] = useState<string | null>(null);
-  const [formData, setFormData] = useState<Partial<CreateAppointmentDto> & { cancelReason?: string }>({});
-  const [isCreating, setIsCreating] = useState(false);
+  const [approvingAppointmentId, setApprovingAppointmentId] = useState<string | null>(null);
+  const [rejectingAppointmentId, setRejectingAppointmentId] = useState<string | null>(null);
+  const [rejectionReason, setRejectionReason] = useState<string>('');
+  const [formData, setFormData] = useState<Partial<UpdateAppointmentDto> & { cancelReason?: string }>({});
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
   const [showToast, setShowToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -40,16 +45,16 @@ function Appointments() {
       fetchAppointments();
       fetchPatients();
       fetchNurses();
+      fetchDoctors();
     }
   }, [isAllowed]);
 
   useEffect(() => {
-    // Apply status filter
     const filtered = statusFilter
       ? appointments.filter((appt) => appt.status === statusFilter)
       : appointments;
     setFilteredAppointments(filtered);
-    setCurrentPage(1); // Reset to first page on filter change
+    setCurrentPage(1);
   }, [appointments, statusFilter]);
 
   const fetchAppointments = async () => {
@@ -83,38 +88,12 @@ function Appointments() {
     }
   };
 
-  const handleCreate = async () => {
-    if (!profileId) {
-      setShowToast({ message: 'Doctor profile not found', type: 'error' });
-      return;
-    }
-    if (!formData.patientId) {
-      setShowToast({ message: 'Please select a patient', type: 'error' });
-      return;
-    }
-    if (!formData.startTime || !formData.endTime) {
-      setShowToast({ message: 'Please provide start and end times', type: 'error' });
-      return;
-    }
+  const fetchDoctors = async () => {
     try {
-      const appointmentData: CreateAppointmentDto = {
-        ...formData,
-        patientId: formData.patientId,
-        doctorId: profileId,
-        date: formData.date ? new Date(formData.date) : new Date(),
-        startTime: formData.startTime,
-        endTime: formData.endTime,
-        isFirstVisit: formData.isFirstVisit || false,
-        isVirtual: formData.isVirtual || false,
-      };
-      const newAppointment = await createAppointment(appointmentData);
-      setAppointments([...appointments, newAppointment]);
-      setFilteredAppointments([...filteredAppointments, newAppointment]);
-      setIsCreating(false);
-      setFormData({});
-      setShowToast({ message: 'Appointment created successfully', type: 'success' });
+      const data = await getDoctors();
+      setDoctors(data);
     } catch (error: any) {
-      setShowToast({ message: error.message || 'Failed to create appointment', type: 'error' });
+      setShowToast({ message: error.message || 'Failed to fetch doctors', type: 'error' });
     }
   };
 
@@ -124,11 +103,12 @@ function Appointments() {
       setEditingAppointment(appointmentData);
       setFormData({
         patientId: appointmentData.patient.id,
+        doctorId: appointmentData.doctor.id,
         nurseId: appointmentData.nurse?.id,
         date: new Date(appointmentData.date),
         startTime: appointmentData.startTime,
         endTime: appointmentData.endTime,
-        status: appointmentData.status,
+        status: appointmentData.status as AppointmentStatus,
         reason: appointmentData.reason,
         notes: appointmentData.notes,
         isFirstVisit: appointmentData.isFirstVisit,
@@ -140,12 +120,19 @@ function Appointments() {
     }
   };
 
+  const handleViewDetails = (appointment: Appointment) => {
+    setViewingAppointment(appointment);
+  };
+
   const handleUpdate = async () => {
     if (!editingAppointment) return;
     try {
       const updatedData: UpdateAppointmentDto = {
         ...formData,
         date: formData.date ? new Date(formData.date) : undefined,
+        doctorId: user?.role === 'doctor' ? profileId! : formData.doctorId,
+        nurseId: user?.role === 'nurse' ? profileId! : formData.nurseId,
+        status: formData.status ? formData.status as AppointmentStatus : undefined,
       };
       const updatedAppointment = await updateAppointment(editingAppointment.id, updatedData);
       setAppointments(appointments.map((appt) => (appt.id === updatedAppointment.id ? updatedAppointment : appt)));
@@ -155,6 +142,41 @@ function Appointments() {
       setShowToast({ message: 'Appointment updated successfully', type: 'success' });
     } catch (error: any) {
       setShowToast({ message: error.message || 'Failed to update appointment', type: 'error' });
+    }
+  };
+
+  const handleApprove = async () => {
+    if (!approvingAppointmentId) return;
+    try {
+      const approvedAppointment = await approveAppointment(approvingAppointmentId);
+      setAppointments(appointments.map((appt) => (appt.id === approvedAppointment.id ? approvedAppointment : appt)));
+      setFilteredAppointments(filteredAppointments.map((appt) => (appt.id === approvedAppointment.id ? approvedAppointment : appt)));
+      setApprovingAppointmentId(null);
+      setShowToast({ message: 'Appointment approved successfully', type: 'success' });
+    } catch (error: any) {
+      setShowToast({ message: error.message || 'Failed to approve appointment', type: 'error' });
+    }
+  };
+
+  const handleRejectConfirm = async () => {
+    if (!rejectingAppointmentId) return;
+    setRejectingAppointmentId(null); // Close confirmation box
+    // Open rejection reason modal
+    setRejectingAppointmentId(rejectingAppointmentId);
+  };
+
+  const handleReject = async () => {
+    if (!rejectingAppointmentId || !rejectionReason) return;
+    try {
+      const rejectData: RejectAppointmentDto = { rejectionReason };
+      const rejectedAppointment = await rejectAppointment(rejectingAppointmentId, rejectData);
+      setAppointments(appointments.map((appt) => (appt.id === rejectedAppointment.id ? rejectedAppointment : appt)));
+      setFilteredAppointments(filteredAppointments.map((appt) => (appt.id === rejectedAppointment.id ? rejectedAppointment : appt)));
+      setRejectingAppointmentId(null);
+      setRejectionReason('');
+      setShowToast({ message: 'Appointment rejected successfully', type: 'success' });
+    } catch (error: any) {
+      setShowToast({ message: error.message || 'Failed to reject appointment', type: 'error' });
     }
   };
 
@@ -176,7 +198,6 @@ function Appointments() {
     }
   };
 
-  // Pagination logic
   const indexOfLastAppointment = currentPage * appointmentsPerPage;
   const indexOfFirstAppointment = indexOfLastAppointment - appointmentsPerPage;
   const currentAppointments = filteredAppointments.slice(indexOfFirstAppointment, indexOfLastAppointment);
@@ -190,24 +211,81 @@ function Appointments() {
       header: 'Patient',
       render: (appt: Appointment) => `${appt.patient.firstName} ${appt.patient.lastName}`,
     },
-    { key: 'date', header: 'Date', render: (appt: Appointment) => new Date(appt.date).toLocaleDateString() },
+    {
+      key: 'date',
+      header: 'Date',
+      render: (appt: Appointment) => new Date(appt.date).toLocaleDateString(),
+    },
     { key: 'startTime', header: 'Start Time' },
     { key: 'endTime', header: 'End Time' },
-    { key: 'status', header: 'Status' },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (appt: Appointment) =>
+        appt.status
+          .split('_')
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join(' '),
+    },
     { key: 'reason', header: 'Reason' },
     {
-      key: 'actions',
-      header: 'Actions',
+      key: 'approval',
+      header: 'Approval',
+      render: (appt: Appointment) => {
+        if (appt.status !== AppointmentStatus.PENDING_APPROVAL || !(user?.role === 'doctor' || user?.role === 'nurse')) {
+          return '-';
+        }
+        return (
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setApprovingAppointmentId(appt.id)}
+              className="text-green-600 hover:text-green-800"
+              title="Approve"
+            >
+              <FaCheck />
+            </button>
+            <button
+              onClick={() => setRejectingAppointmentId(appt.id)}
+              className="text-red-600 hover:text-red-800"
+              title="Reject"
+            >
+              <FaTimes />
+            </button>
+          </div>
+        );
+      },
+    },
+    {
+      key: 'view',
+      header: 'View Details',
       render: (appt: Appointment) => (
-        <div className="flex space-x-2">
-          <button
-            onClick={() => handleEdit(appt)}
-            className="text-blue-600 hover:text-blue-800"
-            title="Edit"
-          >
-            <FaEdit />
-          </button>
-          {(user?.role === 'admin' || user?.role === 'doctor') && (
+        <button
+          onClick={() => handleViewDetails(appt)}
+          className="text-blue-600 hover:text-blue-800"
+          title="View Details"
+        >
+          <FaEye />
+        </button>
+      ),
+    },
+    {
+      key: 'actions',
+      header: 'Delete (Actions)',
+      render: (appt: Appointment) => {
+        if (!(user?.role === 'admin' || user?.role === 'doctor')) {
+          return '-';
+        }
+        return (
+          <div className="flex space-x-2">
+            {user?.role === 'admin' && (
+              <button
+                onClick={() => handleEdit(appt)}
+                className="text-blue-600 hover:text-blue-800"
+                title="Edit"
+              >
+                <FaEdit />
+              </button>
+            )}
             <button
               onClick={() => handleDelete(appt.id)}
               className="text-red-600 hover:text-red-800"
@@ -215,14 +293,14 @@ function Appointments() {
             >
               <FaTrash />
             </button>
-          )}
-        </div>
-      ),
+          </div>
+        );
+      },
     },
   ];
 
   if (!isAllowed) {
-    return null;
+    return <div>Access Denied</div>;
   }
 
   if (isLoading) {
@@ -233,23 +311,15 @@ function Appointments() {
     <div className="p-6">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Appointment Management</h1>
-        <Button
-          onClick={() => {
-            setIsCreating(true);
-            setFormData({});
-          }}
-          className="flex items-center space-x-2"
-        >
-          <FaPlus />
-          <span>Create Appointment</span>
-        </Button>
       </div>
       <div className="mb-4">
         <Select
           label="Filter by Status"
           options={[
             { value: '', label: 'All Statuses' },
-            { value: AppointmentStatus.SCHEDULED, label: 'Scheduled' },
+            { value: AppointmentStatus.PENDING_APPROVAL, label: 'Pending Approval' },
+            { value: AppointmentStatus.APPROVED, label: 'Approved' },
+            { value: AppointmentStatus.REJECTED, label: 'Rejected' },
             { value: AppointmentStatus.COMPLETED, label: 'Completed' },
             { value: AppointmentStatus.CANCELLED, label: 'Cancelled' },
             { value: AppointmentStatus.NO_SHOW, label: 'No Show' },
@@ -260,7 +330,6 @@ function Appointments() {
         />
       </div>
       <Table data={currentAppointments} columns={columns} />
-      {/* Pagination Controls */}
       <div className="mt-4 flex justify-between items-center">
         <div>
           Showing {indexOfFirstAppointment + 1} to {Math.min(indexOfLastAppointment, filteredAppointments.length)} of {filteredAppointments.length} appointments
@@ -293,126 +362,127 @@ function Appointments() {
           </Button>
         </div>
       </div>
-      {/* Create/Edit Modal */}
       <Modal
-        isOpen={isCreating || !!editingAppointment}
+        isOpen={!!editingAppointment}
         onClose={() => {
-          setIsCreating(false);
           setEditingAppointment(null);
           setFormData({});
         }}
-        title={isCreating ? 'Create Appointment' : 'Edit Appointment'}
+        title="Edit Appointment"
       >
-        <Select
-          label="Patient"
-          options={patients.map((patient) => ({
-            value: patient.id,
-            label: `${patient.firstName} ${patient.lastName}`,
-          }))}
-          value={formData.patientId || ''}
-          onChange={(e) => setFormData({ ...formData, patientId: e.target.value })}
-          className="mb-4"
-        />
-        <Select
-          label="Nurse (Optional)"
-          options={[{ value: '', label: 'None' }, ...nurses.map((nurse) => ({
-            value: nurse.id,
-            label: `${nurse.firstName} ${nurse.lastName}`,
-          }))]}
-          value={formData.nurseId || ''}
-          onChange={(e) => setFormData({ ...formData, nurseId: e.target.value || undefined })}
-          className="mb-4"
-        />
-        <Input
-          label="Date"
-          type="date"
-          value={formData.date ? new Date(formData.date).toISOString().split('T')[0] : ''}
-          onChange={(e) => setFormData({ ...formData, date: new Date(e.target.value) })}
-          className="mb-4"
-        />
-        <Input
-          label="Start Time (HH:MM)"
-          type="time"
-          value={formData.startTime || ''}
-          onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-          className="mb-4"
-        />
-        <Input
-          label="End Time (HH:MM)"
-          type="time"
-          value={formData.endTime || ''}
-          onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-          className="mb-4"
-        />
-        <Select
-          label="Status"
-          options={Object.keys(AppointmentStatus).map((status) => ({
-            value: AppointmentStatus[status as keyof typeof AppointmentStatus],
-            label: status.charAt(0).toUpperCase() + status.slice(1).toLowerCase(),
-          }))}
-          value={formData.status || AppointmentStatus.SCHEDULED}
-          onChange={(e) => setFormData({ ...formData, status: e.target.value as AppointmentStatus })}
-          className="mb-4"
-        />
-        <Input
-          label="Reason"
-          type="text"
-          value={formData.reason || ''}
-          onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-          className="mb-4"
-        />
-        <Input
-          label="Notes"
-          type="text"
-          value={formData.notes || ''}
-          onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-          className="mb-4"
-        />
-        <Select
-          label="First Visit"
-          options={[
-            { value: 'true', label: 'Yes' },
-            { value: 'false', label: 'No' },
-          ]}
-          value={formData.isFirstVisit ? 'true' : 'false'}
-          onChange={(e) => setFormData({ ...formData, isFirstVisit: e.target.value === 'true' })}
-          className="mb-4"
-        />
-        <Select
-          label="Virtual Appointment"
-          options={[
-            { value: 'true', label: 'Yes' },
-            { value: 'false', label: 'No' },
-          ]}
-          value={formData.isVirtual ? 'true' : 'false'}
-          onChange={(e) => setFormData({ ...formData, isVirtual: e.target.value === 'true' })}
-          className="mb-4"
-        />
-        {formData.isVirtual && (
-          <Input
-            label="Virtual Meeting Link"
-            type="text"
-            value={formData.virtualMeetingLink || ''}
-            onChange={(e) => setFormData({ ...formData, virtualMeetingLink: e.target.value })}
-            className="mb-4"
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Select
+            label="Patient"
+            options={patients.map((patient) => ({
+              value: patient.id,
+              label: `${patient.firstName} ${patient.lastName}`,
+            }))}
+            value={formData.patientId || ''}
+            onChange={(e) => setFormData({ ...formData, patientId: e.target.value })}
           />
+          <Select
+            label="Doctor"
+            options={doctors.map((doctor) => ({
+              value: doctor.id,
+              label: `${doctor.firstName} ${doctor.lastName}`,
+            }))}
+            value={formData.doctorId || ''}
+            onChange={(e) => setFormData({ ...formData, doctorId: e.target.value })}
+          />
+          <Select
+            label="Nurse (Optional)"
+            options={[{ value: '', label: 'None' }, ...nurses.map((nurse) => ({
+              value: nurse.id,
+              label: `${nurse.firstName} ${nurse.lastName}`,
+            }))]}
+            value={formData.nurseId || ''}
+            onChange={(e) => setFormData({ ...formData, nurseId: e.target.value || undefined })}
+          />
+          <Input
+            label="Date"
+            type="date"
+            value={formData.date ? new Date(formData.date).toISOString().split('T')[0] : ''}
+            onChange={(e) => setFormData({ ...formData, date: new Date(e.target.value) })}
+          />
+          <Input
+            label="Start Time (HH:MM)"
+            type="time"
+            value={formData.startTime || ''}
+            onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+          />
+          <Input
+            label="End Time (HH:MM)"
+            type="time"
+            value={formData.endTime || ''}
+            onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+          />
+          <Select
+            label="Status"
+            options={Object.values(AppointmentStatus).map((status) => ({
+              value: status,
+              label: status
+                .split('_')
+                .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .join(' '),
+            }))}
+            value={formData.status || AppointmentStatus.PENDING_APPROVAL}
+            onChange={(e) => setFormData({ ...formData, status: e.target.value as AppointmentStatus })}
+          />
+          <Input
+            label="Reason"
+            type="text"
+            value={formData.reason || ''}
+            onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+          />
+          <Input
+            label="Notes"
+            type="text"
+            value={formData.notes || ''}
+            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+          />
+          <Select
+            label="First Visit"
+            options={[
+              { value: 'true', label: 'Yes' },
+              { value: 'false', label: 'No' },
+            ]}
+            value={formData.isFirstVisit ? 'true' : 'false'}
+            onChange={(e) => setFormData({ ...formData, isFirstVisit: e.target.value === 'true' })}
+          />
+          <Select
+            label="Virtual Appointment"
+            options={[
+              { value: 'true', label: 'Yes' },
+              { value: 'false', label: 'No' },
+            ]}
+            value={formData.isVirtual ? 'true' : 'false'}
+            onChange={(e) => setFormData({ ...formData, isVirtual: e.target.value === 'true' })}
+          />
+        </div>
+        {formData.isVirtual && (
+          <div className="mt-4">
+            <Input
+              label="Virtual Meeting Link"
+              type="text"
+              value={formData.virtualMeetingLink || ''}
+              onChange={(e) => setFormData({ ...formData, virtualMeetingLink: e.target.value })}
+            />
+          </div>
         )}
         {editingAppointment && formData.status === AppointmentStatus.CANCELLED && (
-          <Input
-            label="Cancel Reason"
-            type="text"
-            value={formData.cancelReason || ''}
-            onChange={(e) => setFormData({ ...formData, cancelReason: e.target.value })}
-            className="mb-4"
-          />
+          <div className="mt-4">
+            <Input
+              label="Cancel Reason"
+              type="text"
+              value={formData.cancelReason || ''}
+              onChange={(e) => setFormData({ ...formData, cancelReason: e.target.value })}
+            />
+          </div>
         )}
-        <div className="flex space-x-4">
-          <Button onClick={isCreating ? handleCreate : handleUpdate}>
-            {isCreating ? 'Create' : 'Save'}
-          </Button>
+        <div className="mt-6 flex space-x-4">
+          <Button onClick={handleUpdate}>Save</Button>
           <Button
             onClick={() => {
-              setIsCreating(false);
               setEditingAppointment(null);
               setFormData({});
             }}
@@ -422,7 +492,82 @@ function Appointments() {
           </Button>
         </div>
       </Modal>
-      {/* Delete Confirmation */}
+      <Modal
+        isOpen={!!viewingAppointment}
+        onClose={() => setViewingAppointment(null)}
+        title="Appointment Details"
+      >
+        {viewingAppointment && (
+          <div className="space-y-4">
+            <p><strong>Patient:</strong> {viewingAppointment.patient.firstName} {viewingAppointment.patient.lastName}</p>
+            <p><strong>Doctor:</strong> {viewingAppointment.doctor.firstName} {viewingAppointment.doctor.lastName}</p>
+            {viewingAppointment.nurse && (
+              <p><strong>Nurse:</strong> {viewingAppointment.nurse.firstName} {viewingAppointment.nurse.lastName}</p>
+            )}
+            <p><strong>Date:</strong> {new Date(viewingAppointment.date).toLocaleDateString()}</p>
+            <p><strong>Start Time:</strong> {viewingAppointment.startTime}</p>
+            <p><strong>End Time:</strong> {viewingAppointment.endTime}</p>
+            <p><strong>Status:</strong> {viewingAppointment.status
+              .split('_')
+              .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+              .join(' ')}</p>
+            <p><strong>Reason:</strong> {viewingAppointment.reason || 'N/A'}</p>
+            <p><strong>Notes:</strong> {viewingAppointment.notes || 'N/A'}</p>
+            <p><strong>First Visit:</strong> {viewingAppointment.isFirstVisit ? 'Yes' : 'No'}</p>
+            <p><strong>Virtual:</strong> {viewingAppointment.isVirtual ? 'Yes' : 'No'}</p>
+            {viewingAppointment.isVirtual && (
+              <p><strong>Meeting Link:</strong> <a href={viewingAppointment.virtualMeetingLink} target="_blank" rel="noopener noreferrer">{viewingAppointment.virtualMeetingLink}</a></p>
+            )}
+          </div>
+        )}
+        <div className="mt-6">
+          <Button onClick={() => setViewingAppointment(null)} className="bg-gray-500 hover:bg-gray-600">
+            Close
+          </Button>
+        </div>
+      </Modal>
+      <Modal
+        isOpen={!!rejectingAppointmentId && !approvingAppointmentId}
+        onClose={() => {
+          setRejectingAppointmentId(null);
+          setRejectionReason('');
+        }}
+        title="Reject Appointment"
+      >
+        <div className="space-y-4">
+          <Input
+            label="Rejection Reason"
+            type="text"
+            value={rejectionReason}
+            onChange={(e) => setRejectionReason(e.target.value)}
+            placeholder="Enter reason for rejection"
+          />
+          <div className="flex space-x-4">
+            <Button onClick={handleReject}>Reject</Button>
+            <Button
+              onClick={() => {
+                setRejectingAppointmentId(null);
+                setRejectionReason('');
+              }}
+              className="bg-gray-500 hover:bg-gray-600"
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </Modal>
+      <ConfirmBox
+        isOpen={!!approvingAppointmentId}
+        message="Are you sure you want to approve this appointment?"
+        onConfirm={handleApprove}
+        onCancel={() => setApprovingAppointmentId(null)}
+      />
+      <ConfirmBox
+        isOpen={!!rejectingAppointmentId && !approvingAppointmentId}
+        message="Are you sure you want to reject this appointment?"
+        onConfirm={handleRejectConfirm}
+        onCancel={() => setRejectingAppointmentId(null)}
+      />
       <ConfirmBox
         isOpen={!!deletingAppointmentId}
         message="Are you sure you want to delete this appointment?"
