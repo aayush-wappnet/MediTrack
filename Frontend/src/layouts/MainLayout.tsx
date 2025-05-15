@@ -18,11 +18,12 @@ function MainLayout({ children }: MainLayoutProps) {
       { path: '/', label: 'Dashboard', icon: <FaTachometerAlt /> },
       { path: '/users', label: 'Users', icon: <FaUsers /> },
       { path: '/audit-logs', label: 'Audit Logs', icon: <FaFileAlt /> },
+      { path: '/appointments', label: 'Appointments', icon: <FaCalendarAlt /> },
       { path: '/reports', label: 'Reports', icon: <FaChartBar /> },
     ],
     doctor: [
       { path: '/', label: 'Dashboard', icon: <FaTachometerAlt /> },
-      { path: '/appointments', label: 'Appointments', icon: <FaCalendarAlt /> },
+      { path: '/doctor-appointments', label: 'Appointments', icon: <FaCalendarAlt /> },
       { path: '/patients', label: 'Patients', icon: <FaUserMd /> },
       { path: '/prescriptions', label: 'Prescriptions', icon: <FaPrescription /> },
       { path: '/diagnoses', label: 'Diagnoses', icon: <FaDiagnoses /> },
@@ -30,7 +31,7 @@ function MainLayout({ children }: MainLayoutProps) {
     ],
     nurse: [
       { path: '/', label: 'Dashboard', icon: <FaTachometerAlt /> },
-      { path: '/appointments', label: 'Appointments', icon: <FaCalendarAlt /> },
+      { path: '/nurse-appointments', label: 'Appointments', icon: <FaCalendarAlt /> },
       { path: '/prescriptions', label: 'Prescriptions', icon: <FaPrescription /> },
       { path: '/lab-reports', label: 'Lab Reports', icon: <FaFlask /> },
       { path: '/vitals', label: 'Vitals', icon: <FaHeartbeat /> },

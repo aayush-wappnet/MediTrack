@@ -12,20 +12,17 @@ import { useRoleGuard } from '../../hooks/useRoleGuard';
 import { useAuth } from '../../hooks/useAuth';
 import { getAppointments, updateAppointment, deleteAppointment, approveAppointment, rejectAppointment, getAppointmentById } from '../../api/endpoints/appointments';
 import { getPatients } from '../../api/endpoints/patients';
-import { getNurses } from '../../api/endpoints/nurses';
 import { getDoctors } from '../../api/endpoints/doctors';
 import { type Appointment, AppointmentStatus, type UpdateAppointmentDto, type RejectAppointmentDto } from '../../api/types/appointments.types';
 import { type Patient } from '../../api/types/patients.types';
-import { type Nurse } from '../../api/types/nurses.types';
 import { type Doctor } from '../../api/types/doctors.types';
 
 function Appointments() {
-  const { isAllowed } = useRoleGuard(['admin', 'doctor', 'nurse']);
+  const { isAllowed } = useRoleGuard(['admin', 'doctor']);
   const { user, profileId } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [filteredAppointments, setFilteredAppointments] = useState<Appointment[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
-  const [nurses, setNurses] = useState<Nurse[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
   const [viewingAppointment, setViewingAppointment] = useState<Appointment | null>(null);
@@ -44,7 +41,6 @@ function Appointments() {
     if (isAllowed) {
       fetchAppointments();
       fetchPatients();
-      fetchNurses();
       fetchDoctors();
     }
   }, [isAllowed]);
@@ -79,15 +75,6 @@ function Appointments() {
     }
   };
 
-  const fetchNurses = async () => {
-    try {
-      const data = await getNurses();
-      setNurses(data);
-    } catch (error: any) {
-      setShowToast({ message: error.message || 'Failed to fetch nurses', type: 'error' });
-    }
-  };
-
   const fetchDoctors = async () => {
     try {
       const data = await getDoctors();
@@ -104,7 +91,6 @@ function Appointments() {
       setFormData({
         patientId: appointmentData.patient.id,
         doctorId: appointmentData.doctor.id,
-        nurseId: appointmentData.nurse?.id,
         date: new Date(appointmentData.date),
         startTime: appointmentData.startTime,
         endTime: appointmentData.endTime,
@@ -131,7 +117,6 @@ function Appointments() {
         ...formData,
         date: formData.date ? new Date(formData.date) : undefined,
         doctorId: user?.role === 'doctor' ? profileId! : formData.doctorId,
-        nurseId: user?.role === 'nurse' ? profileId! : formData.nurseId,
         status: formData.status ? formData.status as AppointmentStatus : undefined,
       };
       const updatedAppointment = await updateAppointment(editingAppointment.id, updatedData);
@@ -232,7 +217,7 @@ function Appointments() {
       key: 'approval',
       header: 'Approval',
       render: (appt: Appointment) => {
-        if (appt.status !== AppointmentStatus.PENDING_APPROVAL || !(user?.role === 'doctor' || user?.role === 'nurse')) {
+        if (appt.status !== AppointmentStatus.PENDING_APPROVAL || user?.role !== 'doctor') {
           return '-';
         }
         return (
@@ -388,15 +373,6 @@ function Appointments() {
             }))}
             value={formData.doctorId || ''}
             onChange={(e) => setFormData({ ...formData, doctorId: e.target.value })}
-          />
-          <Select
-            label="Nurse (Optional)"
-            options={[{ value: '', label: 'None' }, ...nurses.map((nurse) => ({
-              value: nurse.id,
-              label: `${nurse.firstName} ${nurse.lastName}`,
-            }))]}
-            value={formData.nurseId || ''}
-            onChange={(e) => setFormData({ ...formData, nurseId: e.target.value || undefined })}
           />
           <Input
             label="Date"

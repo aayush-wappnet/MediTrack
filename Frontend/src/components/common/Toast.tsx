@@ -7,7 +7,7 @@ interface ToastProps {
   duration?: number;
 }
 
-function Toast({ message, type, onClose, duration = 3000 }: ToastProps) {
+function Toast({ message, type, onClose, duration = 6000 }: ToastProps) {
   useEffect(() => {
     const timer = setTimeout(onClose, duration);
     return () => clearTimeout(timer);
@@ -20,7 +20,7 @@ function Toast({ message, type, onClose, duration = 3000 }: ToastProps) {
 
   return (
     <div
-      className={`fixed bottom-4 right-4 px-4 py-2 text-white rounded shadow-lg ${typeStyles[type]}`}
+      className={`fixed top-4 right-4 px-4 py-2 text-white rounded shadow-lg ${typeStyles[type]}`}
     >
       {message}
     </div>
