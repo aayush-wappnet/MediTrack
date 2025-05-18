@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FaEdit, FaTrash, FaCheck, FaTimes, FaEye } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaCheck, FaTimes, FaEye, FaCalendarCheck } from 'react-icons/fa';
 import Table from '../../components/common/Table';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
@@ -294,7 +294,8 @@ function Appointments() {
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex items-center mb-4">
+        <FaCalendarCheck className="mr-2 text-3xl" />
         <h1 className="text-2xl font-bold">Appointment Management</h1>
       </div>
       <div className="mb-4">

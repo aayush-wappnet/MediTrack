@@ -10,3 +10,7 @@ export const getPatientById = async (id: string): Promise<Patient> => {
   const response = await apiClient.get<Patient>(`/patients/${id}`);
   return response.data;
 };
+
+export const deletePatient = async (id: string): Promise<void> => {
+  await apiClient.delete(`/patients/${id}`);
+};

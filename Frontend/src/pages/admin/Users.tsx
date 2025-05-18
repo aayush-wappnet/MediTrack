@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FaEdit, FaTrash } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaUsers } from 'react-icons/fa';
 import Table from '../../components/common/Table';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
@@ -179,7 +179,10 @@ function Users() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">User Management</h1>
+      <div className="flex items-center mb-4">
+      <FaUsers className="mr-2 text-3xl" />
+      <h1 className="text-2xl font-bold">User Management</h1>
+      </div>
       <div className="mb-4">
         <Select
           label="Filter by Role"

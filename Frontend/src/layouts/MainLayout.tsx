@@ -17,13 +17,14 @@ function MainLayout({ children }: MainLayoutProps) {
     admin: [
       { path: '/', label: 'Dashboard', icon: <FaTachometerAlt /> },
       { path: '/users', label: 'Users', icon: <FaUsers /> },
+      { path: '/patients', label: 'Patients', icon: <FaUserMd /> },
       { path: '/audit-logs', label: 'Audit Logs', icon: <FaFileAlt /> },
       { path: '/appointments', label: 'Appointments', icon: <FaCalendarAlt /> },
       { path: '/reports', label: 'Reports', icon: <FaChartBar /> },
     ],
     doctor: [
       { path: '/', label: 'Dashboard', icon: <FaTachometerAlt /> },
-      { path: '/doctor-appointments', label: 'Appointments', icon: <FaCalendarAlt /> },
+      { path: '/appointments', label: 'Appointments', icon: <FaCalendarAlt /> },
       { path: '/diagnoses', label: 'Diagnoses', icon: <FaDiagnoses /> },
       { path: '/patients', label: 'Patients', icon: <FaUserMd /> },
       { path: '/prescriptions', label: 'Prescriptions', icon: <FaPrescription /> },
