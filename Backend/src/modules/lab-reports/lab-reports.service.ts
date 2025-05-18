@@ -7,7 +7,7 @@ import { UpdateLabReportDto } from './dto/update-lab-report.dto';
 import { PatientsService } from '../patients/patients.service';
 import { DoctorsService } from '../doctors/doctors.service';
 import { NursesService } from '../nurses/nurses.service';
-import { AppointmentsService } from '../appointments/appointments.service'; // Added import
+import { AppointmentsService } from '../appointments/appointments.service';
 
 @Injectable()
 export class LabReportsService {
@@ -17,17 +17,15 @@ export class LabReportsService {
     private patientsService: PatientsService,
     private doctorsService: DoctorsService,
     private nursesService: NursesService,
-    private appointmentsService: AppointmentsService, // Added injection
+    private appointmentsService: AppointmentsService,
   ) {}
 
   async create(createLabReportDto: CreateLabReportDto): Promise<LabReport> {
-    const { patientId, orderedById, uploadedById, appointmentId, ...labReportData } = createLabReportDto;
+    const { patientId, orderedById, uploadedById, appointmentId, testParameters, ...labReportData } = createLabReportDto;
     
-    // Get patient and doctor
     const patient = await this.patientsService.findOne(patientId);
     const doctor = await this.doctorsService.findOne(orderedById);
-
-    // Find appointment (now required)
+    
     let appointment = null;
     try {
       appointment = await this.appointmentsService.findOne(appointmentId);
@@ -35,15 +33,14 @@ export class LabReportsService {
       throw new BadRequestException(`Appointment with ID ${appointmentId} not found`);
     }
     
-    // Create lab report
     const labReport = this.labReportsRepository.create({
       ...labReportData,
+      testParameters: testParameters || [],
       patient,
       orderedBy: doctor,
-      appointment, // Assign appointment
+      appointment,
     });
     
-    // Add nurse if provided
     if (uploadedById) {
       const nurse = await this.nursesService.findOne(uploadedById);
       labReport.uploadedBy = nurse;
@@ -54,14 +51,14 @@ export class LabReportsService {
 
   async findAll(): Promise<LabReport[]> {
     return this.labReportsRepository.find({
-      relations: ['patient', 'orderedBy', 'uploadedBy', 'appointment', 'patient.user', 'orderedBy.user', 'uploadedBy.user'], // Added 'appointment' relation
+      relations: ['patient', 'orderedBy', 'uploadedBy', 'appointment', 'patient.user', 'orderedBy.user', 'uploadedBy.user'],
     });
   }
 
   async findOne(id: string): Promise<LabReport> {
     const labReport = await this.labReportsRepository.findOne({
       where: { id },
-      relations: ['patient', 'orderedBy', 'uploadedBy', 'appointment', 'patient.user', 'orderedBy.user', 'uploadedBy.user'], // Added 'appointment' relation
+      relations: ['patient', 'orderedBy', 'uploadedBy', 'appointment', 'patient.user', 'orderedBy.user', 'uploadedBy.user'],
     });
     
     if (!labReport) {
@@ -74,54 +71,50 @@ export class LabReportsService {
   async findByPatient(patientId: string): Promise<LabReport[]> {
     return this.labReportsRepository.find({
       where: { patient: { id: patientId } },
-      relations: ['patient', 'orderedBy', 'uploadedBy', 'appointment', 'patient.user', 'orderedBy.user', 'uploadedBy.user'], // Added 'appointment' relation
+      relations: ['patient', 'orderedBy', 'uploadedBy', 'appointment', 'patient.user', 'orderedBy.user', 'uploadedBy.user'],
     });
   }
 
   async findByDoctor(doctorId: string): Promise<LabReport[]> {
     return this.labReportsRepository.find({
       where: { orderedBy: { id: doctorId } },
-      relations: ['patient', 'orderedBy', 'uploadedBy', 'appointment', 'patient.user', 'orderedBy.user', 'uploadedBy.user'], // Added 'appointment' relation
+      relations: ['patient', 'orderedBy', 'uploadedBy', 'appointment', 'patient.user', 'orderedBy.user', 'uploadedBy.user'],
     });
   }
 
   async findByNurse(nurseId: string): Promise<LabReport[]> {
     return this.labReportsRepository.find({
       where: { uploadedBy: { id: nurseId } },
-      relations: ['patient', 'orderedBy', 'uploadedBy', 'appointment', 'patient.user', 'orderedBy.user', 'uploadedBy.user'], // Added 'appointment' relation
+      relations: ['patient', 'orderedBy', 'uploadedBy', 'appointment', 'patient.user', 'orderedBy.user', 'uploadedBy.user'],
     });
   }
 
   async findByStatus(status: LabReportStatus): Promise<LabReport[]> {
     return this.labReportsRepository.find({
       where: { status },
-      relations: ['patient', 'orderedBy', 'uploadedBy', 'appointment', 'patient.user', 'orderedBy.user', 'uploadedBy.user'], // Added 'appointment' relation
+      relations: ['patient', 'orderedBy', 'uploadedBy', 'appointment', 'patient.user', 'orderedBy.user', 'uploadedBy.user'],
     });
   }
 
   async update(id: string, updateLabReportDto: UpdateLabReportDto): Promise<LabReport> {
     const labReport = await this.findOne(id);
     
-    // Handle patient change
     if (updateLabReportDto.patientId) {
       const patient = await this.patientsService.findOne(updateLabReportDto.patientId);
       labReport.patient = patient;
     }
     
-    // Handle doctor change
     if (updateLabReportDto.orderedById) {
       const doctor = await this.doctorsService.findOne(updateLabReportDto.orderedById);
       labReport.orderedBy = doctor;
     }
     
-    // Handle nurse change
     if (updateLabReportDto.uploadedById) {
       const nurse = await this.nursesService.findOne(updateLabReportDto.uploadedById);
       labReport.uploadedBy = nurse;
     }
     
-    // Handle appointment change
-    if (updateLabReportDto.appointmentId) { // Cannot be null anymore
+    if (updateLabReportDto.appointmentId) {
       try {
         const appointment = await this.appointmentsService.findOne(updateLabReportDto.appointmentId);
         labReport.appointment = appointment;
@@ -130,7 +123,6 @@ export class LabReportsService {
       }
     }
 
-    // Handle status change to completed
     if (
       updateLabReportDto.status === LabReportStatus.COMPLETED && 
       labReport.status !== LabReportStatus.COMPLETED
@@ -140,9 +132,8 @@ export class LabReportsService {
       }
     }
     
-    // Update other fields
     const fieldsToUpdate = [
-      'testName', 'testType', 'status', 'results', 'normalRanges', 
+      'testName', 'testType', 'status', 'testParameters', 
       'comments', 'doctorNotes', 'testDate', 'resultsDate', 
       'isUrgent', 'isPrinted', 'fileUrl'
     ];
@@ -159,7 +150,6 @@ export class LabReportsService {
   async remove(id: string): Promise<void> {
     const labReport = await this.findOne(id);
     
-    // Check if lab report is already completed
     if (labReport.status === LabReportStatus.COMPLETED) {
       throw new BadRequestException('Cannot delete a lab report that has already been completed');
     }

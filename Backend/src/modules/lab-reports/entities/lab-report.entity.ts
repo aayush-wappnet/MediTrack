@@ -1,8 +1,8 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Patient } from '../../patients/entities/patient.entity';
 import { Doctor } from '../../doctors/entities/doctor.entity';
 import { Nurse } from '../../nurses/entities/nurse.entity';
-import { Appointment } from '../../appointments/entities/appointment.entity'; // Added import
+import { Appointment } from '../../appointments/entities/appointment.entity';
 
 export enum LabReportStatus {
   ORDERED = 'ordered',
@@ -10,6 +10,13 @@ export enum LabReportStatus {
   PROCESSING = 'processing',
   COMPLETED = 'completed',
   CANCELLED = 'cancelled',
+}
+
+export interface TestParameter {
+  parameterName: string;
+  result: string;
+  normalRange: string;
+  unit?: string;
 }
 
 @Entity('lab_reports')
@@ -29,7 +36,7 @@ export class LabReport {
   @JoinColumn()
   uploadedBy: Nurse;
 
-  @ManyToOne(() => Appointment, appointment => appointment.labReports) // Removed { nullable: true }
+  @ManyToOne(() => Appointment, appointment => appointment.labReports)
   @JoinColumn({ name: 'appointmentId' })
   appointment: Appointment;
 
@@ -46,11 +53,8 @@ export class LabReport {
   })
   status: LabReportStatus;
 
-  @Column({ nullable: true })
-  results: string;
-
-  @Column({ nullable: true })
-  normalRanges: string;
+  @Column({ type: 'jsonb', nullable: true })
+  testParameters: TestParameter[];
 
   @Column({ nullable: true })
   comments: string;

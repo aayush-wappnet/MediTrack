@@ -1,7 +1,29 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsUUID, IsBoolean, IsOptional, IsDate, IsEnum } from 'class-validator';
+import { IsNotEmpty, IsString, IsUUID, IsBoolean, IsOptional, IsDate, IsEnum, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { LabReportStatus } from '../entities/lab-report.entity';
+
+export class TestParameterDto {
+  @ApiProperty({ example: 'WBC', description: 'Name of the test parameter' })
+  @IsNotEmpty()
+  @IsString()
+  parameterName: string;
+
+  @ApiProperty({ example: '8.3', description: 'Result of the test parameter' })
+  @IsNotEmpty()
+  @IsString()
+  result: string;
+
+  @ApiProperty({ example: '4.0-11.0', description: 'Normal range for the test parameter' })
+  @IsNotEmpty()
+  @IsString()
+  normalRange: string;
+
+  @ApiProperty({ example: 'x10^9/L', description: 'Unit of measurement', required: false })
+  @IsOptional()
+  @IsString()
+  unit?: string;
+}
 
 export class CreateLabReportDto {
   @ApiProperty({ description: 'Patient ID' })
@@ -39,15 +61,16 @@ export class CreateLabReportDto {
   @IsEnum(LabReportStatus)
   status?: LabReportStatus = LabReportStatus.ORDERED;
 
-  @ApiProperty({ example: 'WBC: 8.3 x10^9/L', description: 'Test results', required: false })
+  @ApiProperty({
+    type: [TestParameterDto],
+    description: 'Array of test parameters with results, normal ranges, and units',
+    required: false
+  })
   @IsOptional()
-  @IsString()
-  results?: string;
-
-  @ApiProperty({ example: 'WBC: 4.0-11.0 x10^9/L', description: 'Normal ranges for the test', required: false })
-  @IsOptional()
-  @IsString()
-  normalRanges?: string;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TestParameterDto)
+  testParameters?: TestParameterDto[];
 
   @ApiProperty({ example: 'Patient fasting for 12 hours before sample collection', description: 'Comments about the test', required: false })
   @IsOptional()

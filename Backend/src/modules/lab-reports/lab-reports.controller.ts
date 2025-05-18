@@ -32,7 +32,6 @@ export class LabReportsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async create(@Body() createLabReportDto: CreateLabReportDto, @Request() req) {
-    // If no orderedById provided, use the current doctor's ID
     if (!createLabReportDto.orderedById) {
       const doctor = await this.doctorsService.findByUserId(req.user.id);
       createLabReportDto.orderedById = doctor.id;
@@ -52,11 +51,9 @@ export class LabReportsController {
     const user = req.user;
     let labReports = [];
     
-    // Filter by status if provided
     if (status) {
       labReports = await this.labReportsService.findByStatus(status);
     } else {
-      // Handle different roles
       if (user.role === Role.ADMIN) {
         labReports = await this.labReportsService.findAll();
       } else if (user.role === Role.DOCTOR) {
@@ -71,12 +68,10 @@ export class LabReportsController {
       }
     }
     
-    // If user is a nurse or admin, and status filter is applied, respect that
     if (status && (user.role === Role.ADMIN || user.role === Role.NURSE)) {
       return labReports;
     }
     
-    // Further filter by role-specific access
     if (user.role === Role.PATIENT) {
       const patient = await this.patientsService.findByUserId(user.id);
       return labReports.filter(lr => lr.patient.id === patient.id);
@@ -136,7 +131,6 @@ export class LabReportsController {
   async findOne(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
     const labReport = await this.labReportsService.findOne(id);
     
-    // Check if patient is trying to access lab report that isn't theirs
     if (req.user.role === Role.PATIENT) {
       const patient = await this.patientsService.findByUserId(req.user.id);
       if (labReport.patient.id !== patient.id) {
@@ -164,12 +158,10 @@ export class LabReportsController {
   ) {
     const nurse = await this.nursesService.findByUserId(req.user.id);
     
-    // Make sure required fields are provided
-    if (!updateLabReportDto.results) {
-      throw new BadRequestException('Results are required');
+    if (!updateLabReportDto.testParameters || updateLabReportDto.testParameters.length === 0) {
+      throw new BadRequestException('Test parameters are required');
     }
     
-    // Update with nurse info and status
     updateLabReportDto.uploadedById = nurse.id;
     updateLabReportDto.status = LabReportStatus.COMPLETED;
     updateLabReportDto.resultsDate = new Date();
@@ -192,29 +184,25 @@ export class LabReportsController {
     @Body() updateLabReportDto: UpdateLabReportDto,
     @Request() req
   ) {
-    // Check permissions for the specific role
     const labReport = await this.labReportsService.findOne(id);
     
     if (req.user.role === Role.DOCTOR) {
       const doctor = await this.doctorsService.findByUserId(req.user.id);
       
-      // Doctors can only update lab reports they ordered or add doctor notes
       if (labReport.orderedBy.id !== doctor.id && Object.keys(updateLabReportDto).length > 1 && !updateLabReportDto.doctorNotes) {
         return { message: 'You can only add notes to lab reports you did not order' };
       }
     } else if (req.user.role === Role.NURSE) {
-      // Nurses can only update certain fields
-      const allowedFields = ['status', 'results', 'testDate', 'resultsDate', 'comments', 'fileUrl', 'uploadedById'];
+      const allowedFields = ['status', 'testParameters', 'testDate', 'resultsDate', 'comments', 'fileUrl', 'uploadedById'];
       const providedFields = Object.keys(updateLabReportDto);
       
       const hasDisallowedFields = providedFields.some(field => !allowedFields.includes(field));
       
       if (hasDisallowedFields) {
-        return { message: 'You can only update results, status, dates, comments, and file URL' };
+        return { message: 'You can only update test parameters, status, dates, comments, and file URL' };
       }
       
-      // If updating results, set the nurse as the uploader
-      if (updateLabReportDto.results || updateLabReportDto.status === LabReportStatus.COMPLETED) {
+      if (updateLabReportDto.testParameters || updateLabReportDto.status === LabReportStatus.COMPLETED) {
         const nurse = await this.nursesService.findByUserId(req.user.id);
         updateLabReportDto.uploadedById = nurse.id;
       }
@@ -233,7 +221,6 @@ export class LabReportsController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Lab report not found' })
   async remove(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
-    // Doctors can only delete lab reports they ordered
     const labReport = await this.labReportsService.findOne(id);
     const doctor = await this.doctorsService.findByUserId(req.user.id);
     
