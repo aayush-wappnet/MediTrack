@@ -174,7 +174,6 @@ function Prescriptions() {
 
   const handleSave = async () => {
     try {
-      // Use Omit<Medication, 'id' | 'prescription'> to create medication objects without id
       const medications = (formData.medicationsForm || []).map((med: MedicationFormData) => ({
         medicationName: med.medicationName,
         dosage: parseFloat(med.dosage),
@@ -183,11 +182,8 @@ function Prescriptions() {
         lunch: med.lunch === '1',
         dinner: med.dinner === '1',
         duration: med.duration,
-        instructions: med.instructions || undefined, // Ensure instructions is undefined if empty
+        instructions: med.instructions || undefined,
       })) as Omit<Medication, 'id' | 'prescription'>[];
-
-      // Use the medications array without the id property
-      // TypeScript will handle this correctly with our PrescriptionPayload type in the API
 
       const data: PrescriptionPayload = {
         patientId: formData.patientId,
@@ -509,7 +505,12 @@ function Prescriptions() {
             <p><strong>Patient:</strong> {viewingPrescription.patient?.firstName || 'N/A'} {viewingPrescription.patient?.lastName || ''}</p>
             <p><strong>Doctor:</strong> {viewingPrescription.doctor?.firstName || 'N/A'} {viewingPrescription.doctor?.lastName || ''}</p>
             <p><strong>Nurse:</strong> {viewingPrescription.nurse ? `${viewingPrescription.nurse.firstName} ${viewingPrescription.nurse.lastName}` : 'Not assigned'}</p>
-            <p><strong>Appointment:</strong> {viewingPrescription.appointment ? `With ${viewingPrescription.appointment.patient.firstName} ${viewingPrescription.appointment.patient.lastName} on ${new Date(viewingPrescription.appointment.date).toLocaleDateString()} at ${viewingPrescription.appointment.startTime}` : 'N/A'}</p>
+            <p>
+              <strong>Appointment:</strong>{' '}
+              {viewingPrescription.appointment
+                ? `On ${new Date(viewingPrescription.appointment.date).toLocaleDateString()} at ${viewingPrescription.appointment.startTime}`
+                : 'N/A'}
+            </p>
             <p><strong>Instructions:</strong> {viewingPrescription.instructions || 'N/A'}</p>
             <p><strong>Status:</strong> {viewingPrescription.status}</p>
             <p><strong>Fulfilled Date:</strong> {viewingPrescription.fulfilledDate ? new Date(viewingPrescription.fulfilledDate).toLocaleDateString() : 'N/A'}</p>

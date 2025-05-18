@@ -141,7 +141,7 @@ function PatientDiagnoses() {
           <div className="space-y-4">
             <p><strong>Patient:</strong> {viewingDiagnosis.patient?.firstName || 'N/A'} {viewingDiagnosis.patient?.lastName || ''}</p>
             <p><strong>Doctor:</strong> {viewingDiagnosis.doctor?.firstName || 'N/A'} {viewingDiagnosis.doctor?.lastName || ''}</p>
-            <p><strong>Appointment:</strong> With {viewingDiagnosis.appointment?.patient?.firstName || 'N/A'} {viewingDiagnosis.appointment?.patient?.lastName || ''} on {viewingDiagnosis.appointment?.date ? new Date(viewingDiagnosis.appointment.date).toLocaleDateString() : 'N/A'} at {viewingDiagnosis.appointment?.startTime || 'N/A'}</p>
+            <p><strong>Appointment:</strong> With Dr. {viewingDiagnosis.doctor?.firstName || 'N/A'} {viewingDiagnosis.appointment?.patient?.lastName || ''} on {viewingDiagnosis.appointment?.date ? new Date(viewingDiagnosis.appointment.date).toLocaleDateString() : 'N/A'} at {viewingDiagnosis.appointment?.startTime || 'N/A'}</p>
             <p><strong>Diagnosis Name:</strong> {viewingDiagnosis.diagnosisName || 'N/A'}</p>
             <p><strong>Diagnosis Code:</strong> {viewingDiagnosis.diagnosisCode || 'N/A'}</p>
             <p><strong>Diagnosis Type:</strong> {viewingDiagnosis.diagnosisType || 'N/A'}</p>

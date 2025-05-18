@@ -142,7 +142,12 @@ function PatientPrescriptions() {
             <p><strong>Patient:</strong> {viewingPrescription.patient?.firstName || 'N/A'} {viewingPrescription.patient?.lastName || ''}</p>
             <p><strong>Doctor:</strong> {viewingPrescription.doctor?.firstName || 'N/A'} {viewingPrescription.doctor?.lastName || ''}</p>
             <p><strong>Nurse:</strong> {viewingPrescription.nurse ? `${viewingPrescription.nurse.firstName} ${viewingPrescription.nurse.lastName}` : 'Not assigned'}</p>
-            <p><strong>Appointment:</strong> {viewingPrescription.appointment ? `With ${viewingPrescription.appointment.patient.firstName} ${viewingPrescription.appointment.patient.lastName} on ${new Date(viewingPrescription.appointment.date).toLocaleDateString()} at ${viewingPrescription.appointment.startTime}` : 'N/A'}</p>
+            <p>
+              <strong>Appointment:</strong>{' '}
+              {viewingPrescription.appointment
+                ? `On ${new Date(viewingPrescription.appointment.date).toLocaleDateString()} at ${viewingPrescription.appointment.startTime}`
+                : 'N/A'}
+            </p>
             <p><strong>Instructions:</strong> {viewingPrescription.instructions || 'N/A'}</p>
             <p><strong>Status:</strong> {viewingPrescription.status}</p>
             <p><strong>Fulfilled Date:</strong> {viewingPrescription.fulfilledDate ? new Date(viewingPrescription.fulfilledDate).toLocaleDateString() : 'N/A'}</p>
