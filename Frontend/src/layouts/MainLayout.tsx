@@ -16,11 +16,12 @@ function MainLayout({ children }: MainLayoutProps) {
   const navItems: { [key: string]: { path: string; label: string; icon: JSX.Element }[] } = {
     admin: [
       { path: '/', label: 'Dashboard', icon: <FaTachometerAlt /> },
+      { path: '/reports', label: 'Reports', icon: <FaChartBar /> },
       { path: '/users', label: 'Users', icon: <FaUsers /> },
       { path: '/patients', label: 'Patients', icon: <FaUserMd /> },
       { path: '/audit-logs', label: 'Audit Logs', icon: <FaFileAlt /> },
       { path: '/appointments', label: 'Appointments', icon: <FaCalendarAlt /> },
-      { path: '/reports', label: 'Reports', icon: <FaChartBar /> },
+      { path: '/admin-lab-reports', label: 'Lab Reports', icon: <FaFlask /> },
     ],
     doctor: [
       { path: '/', label: 'Dashboard', icon: <FaTachometerAlt /> },
@@ -28,13 +29,13 @@ function MainLayout({ children }: MainLayoutProps) {
       { path: '/diagnoses', label: 'Diagnoses', icon: <FaDiagnoses /> },
       { path: '/patients', label: 'Patients', icon: <FaUserMd /> },
       { path: '/prescriptions', label: 'Prescriptions', icon: <FaPrescription /> },
-      { path: '/lab-requests', label: 'Lab Requests', icon: <FaFlask /> },
+      { path: '/doctor-lab-reports', label: 'Lab Reports', icon: <FaFlask /> },
     ],
     nurse: [
       { path: '/', label: 'Dashboard', icon: <FaTachometerAlt /> },
       { path: '/nurse-appointments', label: 'Appointments', icon: <FaCalendarAlt /> },
       { path: '/nurse-prescriptions', label: 'Prescriptions', icon: <FaPrescription /> },
-      { path: '/lab-reports', label: 'Lab Reports', icon: <FaFlask /> },
+      { path: '/nurse-lab-reports', label: 'Lab Reports', icon: <FaFlask /> },
       { path: '/vitals', label: 'Vitals', icon: <FaHeartbeat /> },
     ],
     patient: [
@@ -42,7 +43,7 @@ function MainLayout({ children }: MainLayoutProps) {
       { path: '/patient-appointments', label: 'Appointments', icon: <FaCalendarAlt /> },
       { path: '/patient-diagnoses', label: 'Diagnoses', icon: <FaDiagnoses /> },
       { path: '/patient-prescriptions', label: 'Prescriptions', icon: <FaPrescription /> },
-      { path: '/lab-reports', label: 'Lab Reports', icon: <FaFlask /> },
+      { path: '/patient-lab-reports', label: 'Lab Reports', icon: <FaFlask /> },
       { path: '/profile', label: 'Profile', icon: <FaUser /> },
     ],
   };

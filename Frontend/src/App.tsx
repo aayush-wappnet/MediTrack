@@ -20,6 +20,10 @@ import PatientPrescriptions from './pages/patient/PatientPrescriptions';
 import PrescriptionQueue from './pages/nurse/PrescriptionQueue';
 import Patients from './pages/Patient';
 import Appointments from './pages/doctor/Appointments';
+import LabReports from './pages/doctor/LabReports';
+import LabReportQueue from './pages/nurse/LabReportQueue';
+import PatientLabReports from './pages/patient/PatientLabReports';
+import AdminLabReports from './pages/admin/AdminLabReports';
 
 function ProtectedRoute({ children }: { children: JSX.Element }) {
   const { isAuthenticated } = useAuth();
@@ -76,6 +80,16 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/admin-lab-reports"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <AdminLabReports />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
           {/* Doctor Routes */}
           <Route
             path="/appointments"
@@ -118,22 +132,22 @@ function App() {
             }
           />
           <Route
-            path="/lab-requests"
+            path="/doctor-lab-reports"
             element={
               <ProtectedRoute>
                 <MainLayout>
-                  <div className="p-4">Lab Requests (Placeholder)</div>
+                  <LabReports />
                 </MainLayout>
               </ProtectedRoute>
             }
           />
           {/* Nurse Routes */}
           <Route
-            path="/lab-reports"
+            path="/nurse-lab-reports"
             element={
               <ProtectedRoute>
                 <MainLayout>
-                  <div className="p-4">Lab Reports (Placeholder)</div>
+                  <LabReportQueue />
                 </MainLayout>
               </ProtectedRoute>
             }
@@ -205,6 +219,16 @@ function App() {
               <ProtectedRoute>
                 <MainLayout>
                   <PatientPrescriptions />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient-lab-reports"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <PatientLabReports />
                 </MainLayout>
               </ProtectedRoute>
             }
