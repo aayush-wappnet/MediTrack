@@ -23,3 +23,16 @@ export interface Doctor {
   userId: string;
   user: User;
 }
+
+export interface DoctorUpdate {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  specialization?: string;
+  licenseNumber?: string;
+  phoneNumber?: string;
+  yearsOfExperience?: number;
+  education?: string;
+  bio?: string;
+  user?: User;
+}

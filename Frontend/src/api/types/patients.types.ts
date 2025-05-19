@@ -26,3 +26,20 @@ export interface Patient {
   updatedAt: string;
   user: User;
 }
+
+export interface PatientUpdate {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  dateOfBirth?: string;
+  gender?: string;
+  bloodType?: string;
+  phoneNumber?: string;
+  address?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  allergies?: string;
+  chronicConditions?: string;
+  barcodeId?: string;
+  user?: User;
+}

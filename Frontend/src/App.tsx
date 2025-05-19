@@ -24,6 +24,9 @@ import LabReports from './pages/doctor/LabReports';
 import LabReportQueue from './pages/nurse/LabReportQueue';
 import PatientLabReports from './pages/patient/PatientLabReports';
 import AdminLabReports from './pages/admin/AdminLabReports';
+import PatientProfile from './pages/patient/PatientProfile';
+import NurseProfile from './pages/nurse/NurseProfile';
+import DoctorProfile from './pages/doctor/DoctorProfile';
 
 function ProtectedRoute({ children }: { children: JSX.Element }) {
   const { isAuthenticated } = useAuth();
@@ -92,7 +95,7 @@ function App() {
           />
           {/* Doctor Routes */}
           <Route
-            path="/appointments"
+            path="/doctor-appointments"
             element={
               <ProtectedRoute>
                 <MainLayout>
@@ -141,6 +144,16 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/doctor-profile"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <DoctorProfile />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
           {/* Nurse Routes */}
           <Route
             path="/nurse-lab-reports"
@@ -182,13 +195,23 @@ function App() {
               </ProtectedRoute>
             }
           />
-          {/* Patient Routes */}
           <Route
-            path="/profile"
+            path="/nurse-profile"
             element={
               <ProtectedRoute>
                 <MainLayout>
-                  <div className="p-4">Profile (Placeholder)</div>
+                  <NurseProfile />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          {/* Patient Routes */}
+          <Route
+            path="/patient-profile"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <PatientProfile />
                 </MainLayout>
               </ProtectedRoute>
             }
