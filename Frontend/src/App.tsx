@@ -27,6 +27,7 @@ import AdminLabReports from './pages/admin/AdminLabReports';
 import PatientProfile from './pages/patient/PatientProfile';
 import NurseProfile from './pages/nurse/NurseProfile';
 import DoctorProfile from './pages/doctor/DoctorProfile';
+import Reports from './pages/admin/Reports';
 
 function ProtectedRoute({ children }: { children: JSX.Element }) {
   const { isAuthenticated } = useAuth();
@@ -78,7 +79,7 @@ function App() {
             element={
               <ProtectedRoute>
                 <MainLayout>
-                  <div className="p-4">Reports (Placeholder)</div>
+                  <Reports />
                 </MainLayout>
               </ProtectedRoute>
             }
@@ -95,7 +96,7 @@ function App() {
           />
           {/* Doctor Routes */}
           <Route
-            path="/doctor-appointments"
+            path="/appointments"
             element={
               <ProtectedRoute>
                 <MainLayout>

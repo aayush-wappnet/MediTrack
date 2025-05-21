@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { FaTachometerAlt, FaUsers, FaFileAlt, FaChartBar, FaCalendarAlt, FaUserMd, FaPrescription, FaDiagnoses, FaFlask, FaHeartbeat, FaUser, FaSignOutAlt, FaBars, FaClinicMedical } from 'react-icons/fa';
+import { FaTachometerAlt, FaUsers, FaChartBar, FaCalendarAlt, FaUserMd, FaPrescription, FaDiagnoses, FaFlask, FaUser, FaSignOutAlt, FaBars, FaClinicMedical } from 'react-icons/fa';
 import { useAuth } from '../hooks/useAuth';
 import type { JSX } from 'react';
 
@@ -19,13 +19,12 @@ function MainLayout({ children }: MainLayoutProps) {
       { path: '/reports', label: 'Reports', icon: <FaChartBar /> },
       { path: '/users', label: 'Users', icon: <FaUsers /> },
       { path: '/patients', label: 'Patients', icon: <FaUserMd /> },
-      { path: '/audit-logs', label: 'Audit Logs', icon: <FaFileAlt /> },
       { path: '/appointments', label: 'Appointments', icon: <FaCalendarAlt /> },
       { path: '/admin-lab-reports', label: 'Lab Reports', icon: <FaFlask /> },
     ],
     doctor: [
       { path: '/', label: 'Dashboard', icon: <FaTachometerAlt /> },
-      { path: '/doctor-appointments', label: 'Appointments', icon: <FaCalendarAlt /> },
+      { path: '/appointments', label: 'Appointments', icon: <FaCalendarAlt /> },
       { path: '/diagnoses', label: 'Diagnoses', icon: <FaDiagnoses /> },
       { path: '/patients', label: 'Patients', icon: <FaUserMd /> },
       { path: '/prescriptions', label: 'Prescriptions', icon: <FaPrescription /> },
@@ -37,7 +36,6 @@ function MainLayout({ children }: MainLayoutProps) {
       { path: '/nurse-appointments', label: 'Appointments', icon: <FaCalendarAlt /> },
       { path: '/nurse-prescriptions', label: 'Prescriptions', icon: <FaPrescription /> },
       { path: '/nurse-lab-reports', label: 'Lab Reports', icon: <FaFlask /> },
-      { path: '/vitals', label: 'Vitals', icon: <FaHeartbeat /> },
       { path: '/nurse-profile', label: 'Profile', icon: <FaUser /> },
     ],
     patient: [
